@@ -1,0 +1,105 @@
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth, db, storage } from "../firebase/config";
+
+import { doc, getDoc } from "firebase/firestore";
+
+import type { User } from "firebase/auth";
+import type { ReactNode } from "react";
+import { capitalizeWords } from "@/utils/stringUtils";
+
+interface UserData {
+  adm: boolean;
+  email: string;
+  name: string;
+  pfpUrl?: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  userData: UserData | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  loading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUserData = async (uid: string) => {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data() as {
+        adm: boolean;
+        name: string;
+        email: string;
+        pfpPath?: string;
+      };
+      let pfpUrl = "";
+      if (data.pfpPath) {
+        try {
+          pfpUrl = await getDownloadURL(ref(storage, data.pfpPath));
+        } catch (e) {
+          pfpUrl = ""; // Se não encontrar a imagem, deixa vazio
+        }
+      }
+      setUserData({
+        adm: data.adm,
+        name: capitalizeWords(data.name),
+        email: data.email,
+        pfpUrl,
+      });
+    } else {
+      setUserData(null);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+      if (firebaseUser) {
+        await fetchUserData(firebaseUser.uid);
+      } else {
+        setUserData(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    await fetchUserData(cred.user.uid);
+    setLoading(false);
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+    setUserData(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, userData, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

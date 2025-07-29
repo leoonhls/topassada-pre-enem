@@ -1,0 +1,20 @@
+/* Custom scrollbar for all scrollable elements */
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 0px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: THIN;
+  scrollbar-color: #334155 transparent;
+}
