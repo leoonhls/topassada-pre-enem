@@ -13,7 +13,7 @@ function RootLayout() {
         <div className="w-full">
           <Header />
 
-          <div className="m-4">
+          <div className="">
             <Outlet />
             <Toaster />
           </div>

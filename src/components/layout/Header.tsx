@@ -42,34 +42,20 @@ function Header() {
   }
 
   return (
-    <nav className="border-b w-full items-center bg-sidebar">
-      <div className="px-3 py-3 lg:px-5 lg:pl-3">
-        <div className="flex gap-3 items-center">
-          <SidebarTrigger className="md:hidden " />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">Início</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              {pathnames.map((name, idx) => {
-                const routeTo = `/${pathnames.slice(0, idx + 1).join("/")}`;
-                return (
-                  <span key={routeTo} className="flex items-center gap-1.5">
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to={routeTo}>
-                          {formatBreadcrumb(decodeURIComponent(name))}
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                  </span>
-                );
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
+    <nav className="border-b w-full items-center bg-blue-600 text-white shadow p-4">
+      <div>
+        <SidebarTrigger className="md:hidden " />
+        <div className="flex flex-col gap-4">
+          <header className="">
+            <div className="max-w-5xl">
+              <h1 className="text-2xl font-bold mb-2">
+                Sistema de Horários - Pré-ENEM
+              </h1>
+              <p className="opacity-90">
+                Gestão de professores, matérias e controle de presença
+              </p>
+            </div>
+          </header>
         </div>
       </div>
     </nav>

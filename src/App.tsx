@@ -13,6 +13,10 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import { ThemeProvider } from "./components/common/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import ScheduleManager from "./features/App";
+import QuadroHorarios from "./features/horarios/QuadroHorarios";
+import CadastroMaterias from "./features/materias/CadastroMaterias";
+import CadastroProfessores from "./features/professores/CadastroProfessores";
+import CadastroHorarios from "./features/horarios/CadastroHorarios";
 
 function App() {
   const router = createBrowserRouter(
@@ -25,6 +29,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <ScheduleManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="materias"
+            element={
+              <ProtectedRoute>
+                <CadastroMaterias />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="professores"
+            element={
+              <ProtectedRoute>
+                <CadastroProfessores />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="horarios"
+            element={
+              <ProtectedRoute>
+                <CadastroHorarios />
               </ProtectedRoute>
             }
           />

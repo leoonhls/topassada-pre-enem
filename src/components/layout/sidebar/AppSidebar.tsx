@@ -38,123 +38,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     navMain: [
       {
-        title: "Dashboard",
+        title: "📅 Início",
         url: "/",
-        icon: MdOutlineDashboard,
         isActive: isActiveRoute("/"),
       },
       {
-        title: "Estoque",
-        url: "estoque",
-        icon: LucidePackageOpen,
-        isActive: isActiveRoute("estoque"),
+        title: "⏰ Horarios",
+        url: "horarios",
+        isActive: isActiveRoute("horarios"),
       },
       {
-        title: "Vendas",
-        url: "ListaVendas",
-        icon: MdOutlineSell,
-        isActive: isActiveRoute("ListaVendas"),
+        title: "📚 Matérias",
+        url: "materias",
+        isActive: isActiveRoute("materias"),
       },
       {
-        title: "Compras",
-        url: "#",
-        icon: ShoppingCartIcon,
-        isActive: isActiveRoute("#", [
-          { url: "novaCompra" },
-          { url: "listaCompras" },
-        ]),
-        items: [
-          {
-            title: "Nova Compra",
-            url: "novaCompra",
-            isActive: isActiveRoute("novaCompra"),
-          },
-          {
-            title: "Lista de Compras",
-            url: "listaCompras",
-            isActive: isActiveRoute("listaCompras"),
-          },
-        ],
-      },
-      {
-        title: "Trocas",
-        url: "#",
-        icon: MdCurrencyExchange,
-        isActive: isActiveRoute("#", [
-          { url: "novaTroca" },
-          { url: "listaTrocas" },
-        ]),
-        items: [
-          {
-            title: "Nova Troca",
-            url: "novaTroca",
-            isActive: isActiveRoute("novaTroca"),
-          },
-          {
-            title: "Lista de Trocas",
-            url: "listaTrocas",
-            isActive: isActiveRoute("listaTrocas"),
-          },
-        ],
-      },
-
-      {
-        title: "Gestão",
-        url: "",
-        icon: MdManageAccounts,
-        hidden: !isAdm(),
-        isActive: isActiveRoute("#", [
-          { url: "usuarios" },
-          { url: "tsi" },
-          { url: "produtos" },
-          { url: "intermediadores" },
-          { url: "fornecedores" },
-          { url: "financeiro" },
-          { url: "clientes" },
-          { url: "producao" },
-        ]),
-        items: [
-          {
-            title: "Usuários",
-            url: "usuarios",
-            isActive: isActiveRoute("usuarios"),
-          },
-          {
-            title: "Lista de TSI",
-            url: "tsi",
-            isActive: isActiveRoute("tsi"),
-          },
-          {
-            title: "Produtos",
-            url: "produtos",
-            isActive: isActiveRoute("produtos"),
-          },
-          {
-            title: "Produção",
-            url: "producao",
-            isActive: isActiveRoute("producao"),
-          },
-          {
-            title: "Intermediadores",
-            url: "intermediadores",
-            isActive: isActiveRoute("intermediadores"),
-          },
-          {
-            title: "Fornecedores",
-            url: "fornecedores",
-            isActive: isActiveRoute("fornecedores"),
-          },
-          {
-            title: "Financeiro",
-            url: "financeiro",
-            isActive: isActiveRoute("financeiro"),
-          },
-          {
-            title: "Clientes",
-            url: "clientes",
-            isActive: isActiveRoute("clientes"),
-          },
-        ],
+        title: "👨‍🏫 Professores",
+        url: "professores",
+        isActive: isActiveRoute("professores"),
       },
     ],
   };
@@ -184,7 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain.filter((item) => !item.hidden)} />
+        <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

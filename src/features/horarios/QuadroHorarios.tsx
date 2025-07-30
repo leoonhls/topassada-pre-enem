@@ -1,32 +1,21 @@
-import React, { useState, useEffect } from "react";
-import {
-  obterHorarios,
-  obterProfessores,
-  obterMaterias,
-  obterPresencasPorData,
-  registrarPresenca,
-  atualizarPresenca,
-} from "./horarios/horariosService";
+import React, { useEffect, useState } from "react";
 import {
   type AulaComDetalhes,
   type QuadroHorario,
   type StatusPresenca,
   DIAS_SEMANA,
-  STATUS_PRESENCA,
-  obterCorStatus,
   ordenarAulasPorHorario,
-} from "./horarios/horarios";
+} from "./horarios";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  atualizarPresenca,
+  obterHorarios,
+  obterMaterias,
+  obterPresencasPorData,
+  obterProfessores,
+  registrarPresenca,
+} from "./horariosService";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AulaCard } from "./AulaCard";
 
 interface QuadroHorariosProps {
   data?: Date;
@@ -167,12 +156,7 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
                   />
                 ))
               ) : (
-                <p
-                  style={{
-                    color: "#999",
-                    textAlign: "center",
-                    margin: "20px 0",
-                  }}>
+                <p className="flex items-center justify-center w-full">
                   Nenhuma aula agendada
                 </p>
               )}
@@ -181,50 +165,6 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
         ))}
       </div>
     </div>
-  );
-};
-
-interface AulaCardProps {
-  aula: AulaComDetalhes;
-  onMarcarPresenca: (aula: AulaComDetalhes, status: StatusPresenca) => void;
-}
-
-const AulaCard: React.FC<AulaCardProps> = ({ aula, onMarcarPresenca }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="font-bold text-sm">
-          {aula.horaInicio} - {aula.horaFim}
-        </div>
-        <div className="text-sm">{aula.materia.nome}</div>
-        <div>Prof. {aula.professor.nome}</div>
-        {aula.sala && <div>Sala: {aula.sala}</div>}
-      </CardHeader>
-
-      <CardContent>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              Marcar
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {(Object.keys(STATUS_PRESENCA) as StatusPresenca[]).map(
-              (status) => (
-                <DropdownMenuItem
-                  onClick={() => {
-                    onMarcarPresenca(aula, status);
-                  }}>
-                  {STATUS_PRESENCA[status]}
-                </DropdownMenuItem>
-              )
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-
-      {aula.presenca?.observacoes && <div>{aula.presenca.observacoes}</div>}
-    </Card>
   );
 };
 
