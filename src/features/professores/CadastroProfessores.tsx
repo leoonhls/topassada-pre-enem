@@ -6,7 +6,8 @@ import {
   deletarProfessor,
   obterMaterias,
 } from "../horarios/horariosService";
-import type { Professor, Materia } from "../horarios/horarios";
+import type { Materia } from "../horarios/horarios";
+import { Professor } from "./Professor";
 
 const CadastroProfessores: React.FC = () => {
   const [professores, setProfessores] = useState<Professor[]>([]);
@@ -17,10 +18,10 @@ const CadastroProfessores: React.FC = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    nome: "",
+    name: "",
     email: "",
-    telefone: "",
-    materias: [] as string[],
+    phone: "",
+    subjects: [] as string[],
   });
 
   const carregarDados = async () => {
@@ -42,10 +43,10 @@ const CadastroProfessores: React.FC = () => {
 
   const limparForm = () => {
     setFormData({
-      nome: "",
+      name: "",
       email: "",
-      telefone: "",
-      materias: [],
+      phone: "",
+      subjects: [],
     });
     setEditando(null);
   };
@@ -70,10 +71,10 @@ const CadastroProfessores: React.FC = () => {
 
   const handleEditar = (professor: Professor) => {
     setFormData({
-      nome: professor.nome,
+      name: professor.name,
       email: professor.email,
-      telefone: professor.telefone || "",
-      materias: professor.materias,
+      phone: professor.phone || "",
+      subjects: professor.subjects,
     });
     setEditando(professor.id);
   };
@@ -93,9 +94,9 @@ const CadastroProfessores: React.FC = () => {
   const handleMateriaChange = (materiaId: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      materias: checked
-        ? [...prev.materias, materiaId]
-        : prev.materias.filter((id) => id !== materiaId),
+      subjects: checked
+        ? [...prev.subjects, materiaId]
+        : prev.subjects.filter((id) => id !== materiaId),
     }));
   };
 
@@ -143,9 +144,9 @@ const CadastroProfessores: React.FC = () => {
           </label>
           <input
             type="text"
-            value={formData.nome}
+            value={formData.name}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, nome: e.target.value }))
+              setFormData((prev) => ({ ...prev, name: e.target.value }))
             }
             required
             style={{
@@ -193,9 +194,9 @@ const CadastroProfessores: React.FC = () => {
           </label>
           <input
             type="tel"
-            value={formData.telefone}
+            value={formData.phone}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, telefone: e.target.value }))
+              setFormData((prev) => ({ ...prev, phone: e.target.value }))
             }
             style={{
               width: "100%",
@@ -235,7 +236,7 @@ const CadastroProfessores: React.FC = () => {
                   }}>
                   <input
                     type="checkbox"
-                    checked={formData.materias.includes(materia.id)}
+                    checked={formData.subjects.includes(materia.id)}
                     onChange={(e) =>
                       handleMateriaChange(materia.id, e.target.checked)
                     }
@@ -306,20 +307,20 @@ const CadastroProfessores: React.FC = () => {
                   alignItems: "flex-start",
                 }}>
                 <div style={{ flex: 1 }}>
-                  <h4 style={{ margin: "0 0 8px 0" }}>{professor.nome}</h4>
+                  <h4 style={{ margin: "0 0 8px 0" }}>{professor.name}</h4>
                   <p style={{ margin: "4px 0", color: "#666" }}>
                     <strong>Email:</strong> {professor.email}
                   </p>
-                  {professor.telefone && (
+                  {professor.phone && (
                     <p style={{ margin: "4px 0", color: "#666" }}>
-                      <strong>Telefone:</strong> {professor.telefone}
+                      <strong>Telefone:</strong> {professor.phone}
                     </p>
                   )}
                   <div style={{ marginTop: "8px" }}>
                     <strong>Matérias:</strong>
                     <div style={{ marginTop: "4px" }}>
-                      {professor.materias.length > 0 ? (
-                        professor.materias.map((materiaId) => {
+                      {professor.subjects.length > 0 ? (
+                        professor.subjects.map((materiaId) => {
                           const materia = materias.find(
                             (m) => m.id === materiaId
                           );

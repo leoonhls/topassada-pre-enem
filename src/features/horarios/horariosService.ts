@@ -12,7 +12,6 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import type {
-  Professor,
   Materia,
   HorarioAula,
   RegistroPresenca,
@@ -20,6 +19,7 @@ import type {
   StatusPresenca,
 } from "./horarios";
 import { db } from "@/firebase/config";
+import { Professor } from "../professores/Professor";
 
 // Collections
 const professoresCollection = collection(db, "professores");
@@ -29,7 +29,7 @@ const presencasCollection = collection(db, "presencas");
 
 // Funções para Professores
 export const criarProfessor = async (
-  professorData: Omit<Professor, "id" | "criadoEm" | "atualizadoEm">
+  professorData: Omit<Professor, "id" | "createdAt">
 ): Promise<string> => {
   const agora = new Date();
   const docRef = await addDoc(professoresCollection, {
@@ -41,14 +41,13 @@ export const criarProfessor = async (
 };
 
 export const obterProfessores = async (): Promise<Professor[]> => {
-  const snapshot = await getDocs(query(professoresCollection, orderBy("nome")));
+  const snapshot = await getDocs(query(professoresCollection, orderBy("name")));
   return snapshot.docs.map(
     (doc) =>
       ({
         id: doc.id,
         ...doc.data(),
-        criadoEm: doc.data().criadoEm.toDate(),
-        atualizadoEm: doc.data().atualizadoEm.toDate(),
+        createdAt: doc.data().criadoEm.toDate(),
       } as Professor)
   );
 };
@@ -62,14 +61,13 @@ export const obterProfessor = async (id: string): Promise<Professor | null> => {
   return {
     id: snapshot.id,
     ...snapshot.data(),
-    criadoEm: snapshot.data().criadoEm.toDate(),
-    atualizadoEm: snapshot.data().atualizadoEm.toDate(),
+    createdAt: snapshot.data().criadoEm.toDate(),
   } as Professor;
 };
 
 export const atualizarProfessor = async (
   id: string,
-  professorData: Partial<Omit<Professor, "id" | "criadoEm" | "atualizadoEm">>
+  professorData: Partial<Omit<Professor, "id" | "createdAt">>
 ): Promise<void> => {
   const docRef = doc(professoresCollection, id);
   await updateDoc(docRef, {

@@ -27,12 +27,14 @@ export const AulaCard: React.FC<AulaCardProps> = ({
         <Badge>{aula.materia.nome}</Badge>
       </CardHeader>
 
-      <CardContent>
-        <div>Prof. {aula.professor.nome}</div>
-        {aula.sala && <div>Sala: {aula.sala}</div>}
+      <CardContent className="flex justify-between items-end gap-6">
+        <div>
+          <div>Prof. {aula.professor.name}</div>
+          {aula.sala && <div>Sala: {aula.sala}</div>}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button size={"sm"} variant="outline">
               Marcar
             </Button>
           </DropdownMenuTrigger>

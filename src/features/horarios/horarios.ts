@@ -1,13 +1,6 @@
 // Tipos para o sistema de horários
-export interface Professor {
-  id: string;
-  nome: string;
-  email: string;
-  telefone?: string;
-  materias: string[]; // IDs das matérias que o professor leciona
-  criadoEm: Date;
-  atualizadoEm: Date;
-}
+
+import { Professor } from "../professores/Professor";
 
 export interface Materia {
   id: string;

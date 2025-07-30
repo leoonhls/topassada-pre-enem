@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  DIAS_SEMANA,
-  DiaSemana,
-  HorarioAula,
-  Materia,
-  Professor,
-} from "./horarios";
+import { DIAS_SEMANA, DiaSemana, HorarioAula, Materia } from "./horarios";
 import {
   atualizarHorario,
   criarHorario,
@@ -14,6 +8,7 @@ import {
   obterMaterias,
   obterProfessores,
 } from "./horariosService";
+import { Professor } from "../professores/Professor";
 
 const CadastroHorarios: React.FC = () => {
   const [horarios, setHorarios] = useState<HorarioAula[]>([]);
@@ -128,7 +123,7 @@ const CadastroHorarios: React.FC = () => {
         const professor = professores.find(
           (p) => p.id === formData.professorId
         );
-        return professor?.materias.includes(materia.id);
+        return professor?.subjects.includes(materia.id);
       })
     : [];
 
@@ -140,7 +135,7 @@ const CadastroHorarios: React.FC = () => {
   useEffect(() => {
     if (formData.professorId && !editando) {
       const professor = professores.find((p) => p.id === formData.professorId);
-      if (professor && !professor.materias.includes(formData.materiaId)) {
+      if (professor && !professor.subjects.includes(formData.materiaId)) {
         setFormData((prev) => ({ ...prev, materiaId: "" }));
       }
     }
@@ -252,7 +247,7 @@ const CadastroHorarios: React.FC = () => {
               <option value="">Selecione um professor</option>
               {professores.map((professor) => (
                 <option key={professor.id} value={professor.id}>
-                  {professor.nome}
+                  {professor.name}
                 </option>
               ))}
             </select>
@@ -547,7 +542,7 @@ const CadastroHorarios: React.FC = () => {
                       )}
                     </td>
                     <td style={{ padding: "12px", border: "1px solid #ddd" }}>
-                      {professor?.nome || "Professor não encontrado"}
+                      {professor?.name || "Professor não encontrado"}
                     </td>
                     <td style={{ padding: "12px", border: "1px solid #ddd" }}>
                       {horario.sala || "-"}
