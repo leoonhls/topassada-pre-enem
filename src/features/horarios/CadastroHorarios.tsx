@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DIAS_SEMANA, DiaSemana, HorarioAula, Materia } from "./horarios";
 import {
   atualizarHorario,
@@ -8,7 +8,11 @@ import {
   obterMaterias,
   obterProfessores,
 } from "./horariosService";
-import { Professor } from "../professores/Professor";
+import { Professor } from "../professor/Professor";
+import { Label } from "@/components/ui/label";
+import { SelectSearchDB } from "@/components/common/SelectSearchDB";
+import { ScheduleDay } from "../schedule/Schedule";
+import { FormField } from "@/components/common/FormField";
 
 const CadastroHorarios: React.FC = () => {
   const [horarios, setHorarios] = useState<HorarioAula[]>([]);
@@ -17,6 +21,10 @@ const CadastroHorarios: React.FC = () => {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
+
+  const [scheduleDay, setScheduleDay] = useState<ScheduleDay>(
+    {} as ScheduleDay
+  );
 
   // Form state
   const [formData, setFormData] = useState({
@@ -123,9 +131,28 @@ const CadastroHorarios: React.FC = () => {
         const professor = professores.find(
           (p) => p.id === formData.professorId
         );
-        return professor?.subjects.includes(materia.id);
+        return professor?.subjectsIds.includes(materia.id);
       })
     : [];
+
+  const handleSelectChange = useCallback(
+    (field: keyof typeof scheduleDay, selected: any, isMulti = false) => {
+      if (isMulti) {
+        setScheduleDay((prev) => ({
+          ...prev,
+          [field]: Array.isArray(selected)
+            ? selected.map((item) => item.value)
+            : [],
+        }));
+      } else {
+        setScheduleDay((prev) => ({
+          ...prev,
+          [field]: selected && !Array.isArray(selected) ? selected.value : "",
+        }));
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     carregarDados();
@@ -135,7 +162,7 @@ const CadastroHorarios: React.FC = () => {
   useEffect(() => {
     if (formData.professorId && !editando) {
       const professor = professores.find((p) => p.id === formData.professorId);
-      if (professor && !professor.subjects.includes(formData.materiaId)) {
+      if (professor && !professor.subjectsIds.includes(formData.materiaId)) {
         setFormData((prev) => ({ ...prev, materiaId: "" }));
       }
     }
@@ -219,17 +246,12 @@ const CadastroHorarios: React.FC = () => {
             gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
             gap: "15px",
           }}>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}>
-              Professor *
-            </label>
-            <select
+          <FormField label="Professor" colSpan="">
+            <SelectSearchDB
               value={formData.professorId}
+              onSelect={(selected) =>
+                handleSelectChange("professorId", selected)
+              }
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
@@ -243,15 +265,9 @@ const CadastroHorarios: React.FC = () => {
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-              }}>
-              <option value="">Selecione um professor</option>
-              {professores.map((professor) => (
-                <option key={professor.id} value={professor.id}>
-                  {professor.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              }}
+            />
+          </FormField>
 
           <div>
             <label

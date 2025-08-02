@@ -12,11 +12,11 @@ import Login from "./pages/Login";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { ThemeProvider } from "./components/common/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
-import ScheduleManager from "./features/App";
-import QuadroHorarios from "./features/horarios/QuadroHorarios";
-import CadastroMaterias from "./features/materias/CadastroMaterias";
-import CadastroProfessores from "./features/professores/CadastroProfessores";
+import ScheduleManager from "./features/schedule/ScheduleManager";
 import CadastroHorarios from "./features/horarios/CadastroHorarios";
+import ProfessorsManager from "./features/professor/professorsManager";
+import LessonsManager from "./features/lesson/LessonsManager";
+import Management from "./features/management";
 
 function App() {
   const router = createBrowserRouter(
@@ -32,11 +32,20 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="materias"
             element={
               <ProtectedRoute>
-                <CadastroMaterias />
+                <LessonsManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="gestao"
+            element={
+              <ProtectedRoute>
+                <Management />
               </ProtectedRoute>
             }
           />
@@ -44,7 +53,7 @@ function App() {
             path="professores"
             element={
               <ProtectedRoute>
-                <CadastroProfessores />
+                <ProfessorsManager />
               </ProtectedRoute>
             }
           />

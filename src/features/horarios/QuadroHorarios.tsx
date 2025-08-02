@@ -4,7 +4,10 @@ import {
   type QuadroHorario,
   type StatusPresenca,
   DIAS_SEMANA,
+  HorarioAula,
+  Materia,
   ordenarAulasPorHorario,
+  RegistroPresenca,
 } from "./horarios";
 import {
   atualizarPresenca,
@@ -16,6 +19,8 @@ import {
 } from "./horariosService";
 
 import { AulaCard } from "./AulaCard";
+import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
+import { Professor } from "../professores/Professor";
 
 interface QuadroHorariosProps {
   data?: Date;
@@ -27,6 +32,15 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
   const [quadroHorario, setQuadroHorario] = useState<QuadroHorario>({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const { getFromCacheOrFetch: getProfessor } =
+    useFirebaseDocumentCache<Professor>("professores");
+    const { getFromCacheOrFetch: getHorarios } =
+      useFirebaseDocumentCache<HorarioAula>("horarios");
+      const { getFromCacheOrFetch: getMaterias } =
+      useFirebaseDocumentCache<Materia>("materias"); 
+      const { getFromCacheOrFetch: getPresencas } =
+      useFirebaseDocumentCache<RegistroPresenca>("presencas");
 
   const carregarDados = async () => {
     try {
@@ -55,9 +69,16 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
         const professor = professoresData.find(
           (p) => p.id === horario.professorId
         );
+        console.log(horario);
         const materia = materiasData.find((m) => m.id === horario.materiaId);
+        console.log(materia);
+
         const presenca = presencasData.find(
-          (p) => p.horarioAulaId === horario.id
+          (p) =>
+            p.horarioAulaId === horario.id &&
+            p.data.getDate() === data.getDate() &&
+            p.data.getMonth() === data.getMonth() &&
+            p.data.getFullYear() === data.getFullYear()
         );
 
         if (professor && materia) {
@@ -88,7 +109,8 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
 
   const marcarPresenca = async (
     aula: AulaComDetalhes,
-    status: StatusPresenca
+    status: StatusPresenca,
+    obs: string
   ) => {
     try {
       if (aula.presenca) {
@@ -101,6 +123,7 @@ const QuadroHorarios: React.FC<QuadroHorariosProps> = ({
           professorId: aula.professorId,
           data,
           status,
+          observacoes: obs,
         });
       }
 

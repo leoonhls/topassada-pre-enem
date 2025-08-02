@@ -19,40 +19,19 @@ const auth = getAuth(app);
 const db = getFirestore(getApp());
 const storage = getStorage(app);
 
-const tsiCollection = collection(db, "/tsi");
-const productionsCollection = collection(db, "/productions");
-
-const productsCollection = collection(db, "/products");
-const suppliersCollection = collection(db, "/suppliers");
-const clientsCollection = collection(db, "/clients");
-const intermediaryCollection = collection(db, "/intermediaries");
-const purchasesCollection = collection(db, "/purchases");
-const stockCollection = collection(db, "/stock");
 const usersCollection = collection(db, "/users");
 const logsCollection = collection(db, "/logs");
-const installmentsCollection = collection(db, "/installments");
-const salesCollection = collection(db, "/sales");
-const exchangesCollection = collection(db, "/exchanges");
-const commissionsCollection = collection(db, "/commissions");
+const professorsCollection = collection(db, "professors");
+const lessonsCollection = collection(db, "lessons");
 
 export {
   app,
   auth,
   db,
   firebaseConfig,
-  productsCollection,
-  purchasesCollection,
-  stockCollection,
   storage,
-  suppliersCollection,
-  clientsCollection,
-  tsiCollection,
   usersCollection,
-  intermediaryCollection,
   logsCollection,
-  installmentsCollection,
-  salesCollection,
-  exchangesCollection,
-  commissionsCollection,
-  productionsCollection,
+  professorsCollection,
+  lessonsCollection,
 };

@@ -43,7 +43,7 @@ export function useFirestoreCollection<T extends { id: string }>(
   const {
     collectionName,
     pageSize = 6,
-    defaultOrderBy = { field: "createdAt" as keyof T, direction: "desc" },
+    defaultOrderBy = { field: "name" as keyof T },
     fieldsToCapitalize = [],
     defaultFilters = [],
   } = config;
@@ -55,28 +55,9 @@ export function useFirestoreCollection<T extends { id: string }>(
     const coll = collection(db, collectionName);
 
     // Array com as restrições da query
-    const queryArray: QueryConstraint[] = [
-      orderBy(defaultOrderBy.field as string, defaultOrderBy.direction),
-      limit(pageSize + 1),
-      ...defaultFilters,
-    ];
+    const queryArray: QueryConstraint[] = [...defaultFilters];
 
-    // Adiciona filtros dinâmicos
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        // Para campos que são arrays (como buyersIds), usa array-contains
-        if (key === "buyersIds" || key === "staffIds" || key === "sellersIds") {
-          queryArray.push(where(key, "array-contains", value));
-        } else {
-          queryArray.push(where(key, "==", value));
-        }
-      }
-    });
 
-    // Adiciona cursor de paginação
-    if (lastDoc) {
-      queryArray.push(startAfter(lastDoc));
-    }
 
     // Executa a query
     const queryRef = query(coll, ...queryArray);

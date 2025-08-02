@@ -1,6 +1,7 @@
 // Tipos para o sistema de horários
 
-import { Professor } from "../professores/Professor";
+import { Professor } from "../professor/Professor";
+
 
 export interface Materia {
   id: string;
@@ -57,13 +58,13 @@ export type StatusPresenca =
   | "presente"
   | "falta"
   | "atraso"
-  | "falta-justificada";
+  | "falta_justificada";
 
 export const STATUS_PRESENCA: Record<StatusPresenca, string> = {
   presente: "Presente",
   falta: "Falta",
   atraso: "Atraso",
-  "falta-justificada": "Falta Justificada",
+  falta_justificada: "Falta Justificada",
 } as const;
 
 // Tipos para exibição
@@ -112,7 +113,7 @@ export const obterCorStatus = (status: StatusPresenca): string => {
       return "#F44336"; // Vermelho
     case "atraso":
       return "#FF9800"; // Laranja
-    case "falta-justificada":
+    case "falta_justificada":
       return "#2196F3"; // Azul
     default:
       return "#9E9E9E"; // Cinza

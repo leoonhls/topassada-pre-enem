@@ -5,14 +5,14 @@ import { Professor } from "./Professor";
 
 export function useProfessors() {
   const { fetchItems } = useFirestoreCollection<Professor>({
-    collectionName: "professores",
+    collectionName: "professors",
     fieldsToCapitalize: ["name"],
     defaultFilters: [where("active", "==", true)],
   });
 
-  const fetchProfessorAsync = (filters: { type?: string }, lastDoc?: any) => {
-    return fetchItems(filters, lastDoc);
+  const fetchProfessorAsync = () => {
+    return fetchItems();
   };
 
-  return { fetchUsersAsync: fetchProfessorAsync };
+  return { fetchProfessorAsync };
 }
