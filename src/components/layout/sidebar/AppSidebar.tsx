@@ -38,24 +38,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     navMain: [
       {
-        title: "📅 Início",
+        title: "Início",
         url: "/",
         isActive: isActiveRoute("/"),
       },
       {
-        title: "⏰ Horarios",
-        url: "horarios",
-        isActive: isActiveRoute("horarios"),
-      },
-      {
-        title: "📚 Matérias",
-        url: "materias",
-        isActive: isActiveRoute("materias"),
-      },
-      {
-        title: "👨‍🏫 Professores",
-        url: "professores",
-        isActive: isActiveRoute("professores"),
+        title: "Gestão",
+        url: "gestao",
+        isActive: isActiveRoute("gestao"),
       },
     ],
   };
