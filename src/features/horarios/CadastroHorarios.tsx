@@ -8,11 +8,12 @@ import {
   obterMaterias,
   obterProfessores,
 } from "./horariosService";
-import { Professor } from "../professor/Professor";
+import { Professor } from "../user/User";
 import { Label } from "@/components/ui/label";
 import { SelectSearchDB } from "@/components/common/SelectSearchDB";
 import { ScheduleDay } from "../schedule/Schedule";
 import { FormField } from "@/components/common/FormField";
+import { professorsCollection } from "@/firebase/config";
 
 const CadastroHorarios: React.FC = () => {
   const [horarios, setHorarios] = useState<HorarioAula[]>([]);
@@ -248,24 +249,11 @@ const CadastroHorarios: React.FC = () => {
           }}>
           <FormField label="Professor" colSpan="">
             <SelectSearchDB
-              value={formData.professorId}
+              collection={professorsCollection}
               onSelect={(selected) =>
                 handleSelectChange("professorId", selected)
               }
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  professorId: e.target.value,
-                }))
-              }
               required
-              disabled={professores.length === 0}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
             />
           </FormField>
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import React from "react";
 import { LessonsList } from "./LessonsList";
-import { NewLesson } from "./NEwLesson";
+import { NewLesson } from "./NewLesson";
 
 const LessonsManager: React.FC = () => {
   return (

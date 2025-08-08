@@ -1,7 +1,6 @@
 // Tipos para o sistema de horários
 
-import { Professor } from "../professor/Professor";
-
+import { Professor } from "../user/User";
 
 export interface Materia {
   id: string;
