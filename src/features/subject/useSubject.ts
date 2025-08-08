@@ -1,18 +1,18 @@
 import { User } from "@/features/users/User";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { where } from "firebase/firestore";
-import { Lesson } from "./Lesson";
+import { Subject } from "./Subject";
 
-export function useLessons() {
-  const { fetchItems } = useFirestoreCollection<Lesson>({
-    collectionName: "lessons",
+export function useSubjects() {
+  const { fetchItems } = useFirestoreCollection<Subject>({
+    collectionName: "subjects",
     fieldsToCapitalize: ["name"],
     defaultFilters: [where("active", "==", true)],
   });
 
-  const fetchLessonAsync = () => {
+  const fetchSubjectAsync = () => {
     return fetchItems();
   };
 
-  return { fetchLessonAsync };
+  return { fetchSubjectAsync };
 }

@@ -15,8 +15,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ScheduleManager from "./features/schedule/ScheduleManager";
 import CadastroHorarios from "./features/horarios/CadastroHorarios";
 import ProfessorsManager from "./features/user/UsersManager";
-import LessonsManager from "./features/lesson/LessonsManager";
-import Management from "./features/management";
+import LessonsManager from "./features/subject/SubjectsManager";
+import Management from "./features/Management";
 
 function App() {
   const router = createBrowserRouter(
@@ -32,36 +32,11 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route
-            path="materias"
-            element={
-              <ProtectedRoute>
-                <LessonsManager />
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="gestao"
             element={
               <ProtectedRoute>
                 <Management />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="professores"
-            element={
-              <ProtectedRoute>
-                <ProfessorsManager />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="horarios"
-            element={
-              <ProtectedRoute>
-                <CadastroHorarios />
               </ProtectedRoute>
             }
           />

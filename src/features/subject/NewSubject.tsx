@@ -10,32 +10,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lesson } from "./Lesson";
+import { Subject } from "./Subject";
 import { useCallback, useState } from "react";
 import { doc, Timestamp } from "firebase/firestore";
 import { setDocWithLog } from "@/firebase/firestoreWithLog";
 import { toast } from "sonner";
 import { handleKeyDown } from "@/utils/HandleKeyDown";
-import { lessonsCollection } from "@/firebase/config";
+import { subjectsCollection } from "@/firebase/config";
 
-export const NewLesson: React.FC = () => {
-  const [lesson, setLesson] = useState<Omit<Lesson, "id">>({
+export const NewSubject: React.FC = () => {
+  const [subject, setSubject] = useState<Omit<Subject, "id">>({
     name: "",
     color: "#ff0000",
     active: true,
   });
 
   const handleSelectChange = useCallback(
-    (field: keyof typeof lesson, selected: any, isMulti = false) => {
+    (field: keyof typeof subject, selected: any, isMulti = false) => {
       if (isMulti) {
-        setLesson((prev) => ({
+        setSubject((prev) => ({
           ...prev,
           [field]: Array.isArray(selected)
             ? selected.map((item) => item.value)
             : [],
         }));
       } else {
-        setLesson((prev) => ({
+        setSubject((prev) => ({
           ...prev,
           [field]: selected && !Array.isArray(selected) ? selected.value : "",
         }));
@@ -47,18 +47,18 @@ export const NewLesson: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const lessonId = doc(lessonsCollection).id;
-      const lessonDocRef = doc(lessonsCollection, lessonId);
-      const message = `Lesson ${lesson.name} cadastrado`;
-      await setDocWithLog(lessonDocRef, { ...lesson, id: lessonId }, message);
+      const subjectId = doc(subjectsCollection).id;
+      const subjectDocRef = doc(subjectsCollection, subjectId);
+      const message = `Subject ${subject.name} cadastrado`;
+      await setDocWithLog(subjectDocRef, { ...subject, id: subjectId }, message);
       toast.success(message);
-      setLesson({
+      setSubject({
         name: "",
         color: "",
         active: true,
       });
     } catch (error) {
-      toast.warning("Erro ao cadastrar lesson");
+      toast.warning("Erro ao cadastrar subject");
     }
   };
 
@@ -78,24 +78,24 @@ export const NewLesson: React.FC = () => {
           className="flex flex-col gap-2 p-3">
           <Label>Nome</Label>
           <Input
-            value={lesson.name}
-            onChange={(e) => setLesson({ ...lesson, name: e.target.value })}
+            value={subject.name}
+            onChange={(e) => setSubject({ ...subject, name: e.target.value })}
             required
           />
           <Label>Cor</Label>
           <div className="flex gap-3">
             <Input
-              value={lesson.color}
+              value={subject.color}
               type="color"
               onChange={(e) =>
-                setLesson((prev) => ({ ...prev, color: e.target.value }))
+                setSubject((prev) => ({ ...prev, color: e.target.value }))
               }
               className="p-2 w-10 h-10 border border-gray-300 rounded cursor-pointer"
             />
             <div
               className="px-3 py-2 rounded font-bold text-white w-min"
-              style={{ backgroundColor: lesson.color }}>
-              {lesson.name || "Preview"}
+              style={{ backgroundColor: subject.color }}>
+              {subject.name || "Preview"}
             </div>
           </div>
 

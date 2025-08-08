@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { User } from "./User";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lesson } from "../lesson/Lesson";
+import { Subject } from "../subject/Subject";
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ type UserCardProps = {
 };
 
 export default function UserCard({ user }: UserCardProps) {
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [lessons, setLessons] = useState<Subject[]>([]);
 
   return (
     <TableRow>

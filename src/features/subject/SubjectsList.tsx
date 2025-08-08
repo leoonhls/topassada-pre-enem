@@ -1,35 +1,35 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useLessons } from "./useLessons";
-import { Lesson } from "./Lesson";
-import LessonCard from "./LessonCard";
+import { useSubjects } from "./useSubject";
+import { Subject } from "./Subject";
+import SubjectCard from "./SubjectCard";
 
-export const LessonsList = memo(() => {
+export const SubjectsList = memo(() => {
   // Hooks para gerenciar filtros e paginação
 
   // Estados para dados e carregamento
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [collSize, setCollSize] = useState("");
 
-  const { fetchLessonAsync } = useLessons();
+  const { fetchSubjectAsync } = useSubjects();
 
   // Handler para remoção de item
   const handleRemove = useCallback((id: string) => {
-    setLessons((prev) => prev.filter((lesson) => lesson.id !== id));
+    setSubjects((prev) => prev.filter((subject) => subject.id !== id));
   }, []);
 
   // Função para carregar os dados
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetchLessonAsync();
+      const response = await fetchSubjectAsync();
 
       setCollSize(response.collSize.toString());
-      setLessons(response.items);
+      setSubjects(response.items);
     } catch (error) {
       console.error(error);
-      toast.warning("Erro ao carregar lessones");
+      toast.warning("Erro ao carregar subjectes");
     } finally {
       setLoading(false);
     }
@@ -47,8 +47,8 @@ export const LessonsList = memo(() => {
         className={`flex flex-wrap gap-3 transition-opacity duration-200 ${
           loading ? "opacity-50" : "opacity-100"
         }`}>
-        {lessons.map((lesson) => (
-          <LessonCard key={lesson.id} lesson={lesson} />
+        {subjects.map((subject) => (
+          <SubjectCard key={subject.id} subject={subject} />
         ))}
       </div>
 

@@ -22,7 +22,7 @@ const storage = getStorage(app);
 const usersCollection = collection(db, "/users");
 const logsCollection = collection(db, "/logs");
 const professorsCollection = collection(db, "professors");
-const lessonsCollection = collection(db, "lessons");
+const subjectsCollection = collection(db, "subjects");
 
 export {
   app,
@@ -33,5 +33,5 @@ export {
   usersCollection,
   logsCollection,
   professorsCollection,
-  lessonsCollection,
+  subjectsCollection,
 };

@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useSchedules } from "./useSchedules";
 import { Schedule } from "./Schedule";
 import { AulaCard } from "../horarios/AulaCard";
+import { useSchedules } from "./useSchedule";
 
 export const SchedulesList = memo(() => {
   // Hooks para gerenciar filtros e paginação
@@ -46,33 +46,7 @@ export const SchedulesList = memo(() => {
         className={`mt-4 space-y-4 transition-opacity duration-200 ${
           loading ? "opacity-50" : "opacity-100"
         }`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-5">
-          {Object.entries(DIAS_SEMANA).map(([dia, nomeDia]) => (
-            <div
-              key={dia}
-              className="border border-gray-300 rounded-lg overflow-hidden">
-              <div className="bg-blue-500 text-center py-2 font-bold">
-                {nomeDia}
-              </div>
-
-              <div className="flex flex-col gap-3 p-4">
-                {quadroHorario[dia]?.length > 0 ? (
-                  quadroHorario[dia].map((aula) => (
-                    <AulaCard
-                      key={aula.id}
-                      aula={aula}
-                      onMarcarPresenca={marcarPresenca}
-                    />
-                  ))
-                ) : (
-                  <p className="flex items-center justify-center w-full">
-                    Nenhuma aula agendada
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-5"></div>
       </div>
 
       {/* Indicador de Carregamento */}

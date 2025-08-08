@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Lesson } from "../lesson/Lesson";
+import { Subject } from "../subject/Subject";
 
 type LessonCardProps = {
-  lesson: Lesson;
+  lesson: Subject;
 };
 
 export default function LessonCard({ lesson }: LessonCardProps) {

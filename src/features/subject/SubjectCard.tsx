@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Lesson } from "./Lesson";
+import { Subject } from "./Subject";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,15 +11,15 @@ import {
 import { MoreHorizontal, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type LessonCardProps = {
-  lesson: Lesson;
+type SubjectCardProps = {
+  subject: Subject;
 };
 
-export default function LessonCard({ lesson }: LessonCardProps) {
+export default function SubjectCard({ subject }: SubjectCardProps) {
   return (
-    <Card className="text-white" style={{ backgroundColor: lesson.color }}>
+    <Card className="text-white" style={{ backgroundColor: subject.color }}>
       <CardContent className="px-3 py-2 flex gap-5 items-center">
-        <div>{lesson.name}</div>
+        <div>{subject.name}</div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <MoreHorizontal className="h-6 w-4" />
