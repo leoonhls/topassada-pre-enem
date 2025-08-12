@@ -105,7 +105,7 @@ export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
   return (
     <div className="flex border rounded-sm">
       <div
-        className="bg-violet-600 p-2 px-4 rounded-l-sm text-white"
+        className="bg-gray-600 p-2 px-4 rounded-l-sm text-white"
         style={{ backgroundColor: data.color }}>
         <div className="font-semibold">{horario.split("-")[0]}</div>
         <div className="font-semibold">{horario.split("-")[1]}</div>

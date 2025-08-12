@@ -44,7 +44,7 @@ export const SchedulesList = memo(() => {
         className={`mt-4 space-y-4 transition-opacity duration-200 ${
           loading ? "opacity-50" : "opacity-100"
         }`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 m-5">
+        <div className="grid gap-4 m-5">
           {schedules.map((schedule) => (
             <DayScheduleCard
               key={schedule.id}

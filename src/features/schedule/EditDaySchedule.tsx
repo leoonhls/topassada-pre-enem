@@ -84,7 +84,7 @@ export default function EditDaySchedule({ scheduleDay, onSave }: Props) {
           <Edit height={10} />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-h-[80vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>
             {capitalizeFirstLetter(scheduleDay.id)}
@@ -93,25 +93,27 @@ export default function EditDaySchedule({ scheduleDay, onSave }: Props) {
             Edição de matérias e professores.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {timeSlotOrder.map((key) => {
-          const timeSlot =
-            scheduleDay.timeSlots[key as keyof typeof scheduleDay.timeSlots];
-          if (
-            !timeSlot ||
-            ("type" in timeSlot && timeSlot.type === "interval")
-          ) {
-            return null;
-          }
-          return (
-            <EditTimeSlot
-              key={key}
-              timeSlotKey={key}
-              timeSlot={timeSlot as TimeSlot}
-              horario={periods[key as keyof typeof periods]}
-              onChange={handleTimeSlotChange}
-            />
-          );
-        })}
+        <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+          {timeSlotOrder.map((key) => {
+            const timeSlot =
+              scheduleDay.timeSlots[key as keyof typeof scheduleDay.timeSlots];
+            if (
+              !timeSlot ||
+              ("type" in timeSlot && timeSlot.type === "interval")
+            ) {
+              return null;
+            }
+            return (
+              <EditTimeSlot
+                key={key}
+                timeSlotKey={key}
+                timeSlot={timeSlot as TimeSlot}
+                horario={periods[key as keyof typeof periods]}
+                onChange={handleTimeSlotChange}
+              />
+            );
+          })}
+        </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -139,7 +141,7 @@ export function EditTimeSlot({
   timeSlotKey,
   onChange,
 }: TimeSlotRowProps) {
-  if (!timeSlot) return;
+  if (!timeSlot) return null;
 
   const [data, setData] = useState({
     name: "",
@@ -172,42 +174,54 @@ export function EditTimeSlot({
   }, [fetchData, getTeacher, getSubject]);
 
   return (
-    <>
-      <div className="flex border rounded-sm text-sm">
-        <div
-          className="flex flex-col items-center justify-center bg-violet-600 p-2 px-4 rounded-l-sm text-white"
-          style={{ backgroundColor: data.color }}>
-          <div className="font-semibold">{horario.split("-")[0]}</div>
-          <div className="font-semibold">{horario.split("-")[1]}</div>
-        </div>
-        <div className="p-2 pl-5 flex gap-2 w-full">
-          <div>
-            Matéria:
-            <SelectSearchDB
-              placeholder={data.subject}
-              collection={subjectsCollection}
-              onSelect={(option) => {
-                if (option && "value" in option) {
-                  onChange(timeSlotKey, "subjectId", option.value);
-                }
-              }}
-            />
-          </div>
-
-          <div>
-            Professor(a):
-            <SelectSearchDB
-              placeholder={data.name}
-              collection={usersCollection}
-              onSelect={(option) => {
-                if (option && "value" in option) {
-                  onChange(timeSlotKey, "teacherId", option.value);
-                }
-              }}
-            />
-          </div>
-        </div>
+    <div className="flex border rounded-sm text-sm">
+      <div
+        className="flex flex-col items-center justify-center bg-gray-600 p-2 px-4 rounded-l-sm text-white"
+        style={{ backgroundColor: data.color }}>
+        <div className="font-semibold">{horario.split("-")[0]}</div>
+        <div className="font-semibold">{horario.split("-")[1]}</div>
       </div>
-    </>
+      <div className="p-2 pl-5 grid items-end gap-2 w-full">
+        <div>
+          Matéria:
+          <SelectSearchDB
+            controlledValue={data.subject}
+            placeholder={data.subject}
+            collection={subjectsCollection}
+            onSelect={(option) => {
+              if (option && "value" in option) {
+                onChange(timeSlotKey, "subjectId", option.value);
+              }
+            }}
+          />
+        </div>
+
+        <div>
+          Professor(a):
+          <SelectSearchDB
+            controlledValue={data.name}
+            placeholder={data.name}
+            collection={usersCollection}
+            onSelect={(option) => {
+              if (option && "value" in option) {
+                onChange(timeSlotKey, "teacherId", option.value);
+              }
+            }}
+          />
+        </div>
+        <Button
+          onClick={() => {
+            onChange(timeSlotKey, "teacherId", "null");
+            onChange(timeSlotKey, "subjectId", "null");
+            setData({
+              name: "Sem Professor",
+              subject: "Sem Matéria",
+              color: "gray",
+            });
+          }}>
+          Sem aula
+        </Button>
+      </div>
+    </div>
   );
 }

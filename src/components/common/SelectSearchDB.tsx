@@ -23,6 +23,7 @@ interface Props {
   required?: boolean;
   isMulti?: boolean;
   placeholder?: string;
+  controlledValue?: string;
 }
 
 export function SelectSearchDB({
@@ -32,6 +33,7 @@ export function SelectSearchDB({
   required = false,
   isMulti = false,
   placeholder = "Pesquisar...",
+  controlledValue,
 }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [allOptions, setAllOptions] = useState<Option[]>([]); // Armazena todas as opções
@@ -40,6 +42,10 @@ export function SelectSearchDB({
     null
   );
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (controlledValue === "") setValue(null);
+  }, [controlledValue]);
 
   // Cache em memória
   const cache = useRef<Map<string, Option[]>>(new Map());
@@ -186,7 +192,7 @@ export function SelectSearchDB({
   return (
     <Select
       inputValue={inputValue}
-      value={value}
+      value={controlledValue ? { value: "", label: controlledValue } : value}
       onChange={handleChange}
       onInputChange={handleInputChange}
       options={options}
