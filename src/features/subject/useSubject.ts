@@ -1,4 +1,3 @@
-import { User } from "@/features/users/User";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { where } from "firebase/firestore";
 import { Subject } from "./Subject";
