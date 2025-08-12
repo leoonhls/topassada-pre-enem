@@ -1,4 +1,5 @@
-import { SelectSearchDB } from "@/components/common/SelectSearchDB";
+import { SelectSearchConstants } from "@/components/common/SelectSearchConstants";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,26 +8,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  db,
-  firebaseConfig,
-  lessonsCollection,
-  storage,
-  usersCollection,
-} from "@/firebase/config";
-import { User } from "./User";
-import { useCallback, useState } from "react";
-import { doc, Timestamp } from "firebase/firestore";
+import { db, firebaseConfig, storage } from "@/firebase/config";
 import { setDocWithLog } from "@/firebase/firestoreWithLog";
-import { toast } from "sonner";
 import { handleKeyDown } from "@/utils/HandleKeyDown";
-import { SelectSearchConstants } from "@/components/common/SelectSearchConstants";
 import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { doc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { User } from "./User";
 
 export const NewUser: React.FC = () => {
   const [user, setUser] = useState<Omit<User, "id">>({

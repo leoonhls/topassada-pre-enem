@@ -1,15 +1,12 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Subject } from "./Subject";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MoreHorizontal } from "lucide-react";
+import { Subject } from "./Subject";
 
 type SubjectCardProps = {
   subject: Subject;

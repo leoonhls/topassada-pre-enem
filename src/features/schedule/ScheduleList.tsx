@@ -1,14 +1,15 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Schedule } from "./Schedule";
-import { AulaCard } from "../horarios/AulaCard";
 import { useSchedules } from "./useSchedule";
+import { DaySchedule } from "./DaySchedule";
+import DayScheduleCard from "./DayScheduleCard";
 
 export const SchedulesList = memo(() => {
   // Hooks para gerenciar filtros e paginação
 
   // Estados para dados e carregamento
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [collSize, setCollSize] = useState("");
 
@@ -46,7 +47,11 @@ export const SchedulesList = memo(() => {
         className={`mt-4 space-y-4 transition-opacity duration-200 ${
           loading ? "opacity-50" : "opacity-100"
         }`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-5"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 m-5">
+          {schedules.map((schedule) => (
+            <DayScheduleCard key={schedule.id} daySchedule={schedule} />
+          ))}
+        </div>
       </div>
 
       {/* Indicador de Carregamento */}

@@ -12,11 +12,8 @@ import Login from "./pages/Login";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { ThemeProvider } from "./components/common/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
-import ScheduleManager from "./features/schedule/ScheduleManager";
-import CadastroHorarios from "./features/horarios/CadastroHorarios";
-import ProfessorsManager from "./features/user/UsersManager";
-import LessonsManager from "./features/subject/SubjectsManager";
 import Management from "./features/Management";
+import ScheduleManager from "./features/schedule/ScheduleManager";
 
 function App() {
   const router = createBrowserRouter(

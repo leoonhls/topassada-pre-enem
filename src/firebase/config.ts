@@ -22,7 +22,7 @@ const storage = getStorage(app);
 const usersCollection = collection(db, "/users");
 const logsCollection = collection(db, "/logs");
 const professorsCollection = collection(db, "professors");
-const subjectsCollection = collection(db, "subjects");
+const subjectsCollection = collection(db, "lessons");
 
 export {
   app,
