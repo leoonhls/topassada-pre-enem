@@ -67,14 +67,13 @@ export function LoginForm({
         <Card className="border-0 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="flex flex-col text-center items-center justify-center">
-              <Avatar className="h-12 w-12 m-3 rounded-md">
+              <Avatar className="h-50 w-50 rounded-md">
                 <AvatarImage
-                  src="src\assets\casa-das-sementes-icon.png"
-                  alt="Casa das Sementes"
+                  src="src\assets\to-passada-icon.png"
+                  alt="Tô Passada Pré-Enem"
                 />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
-              Casa das Sementes
             </CardTitle>
             <CardDescription className="text-center">
               Faça o Login com seu email e senha.
@@ -115,12 +114,7 @@ export function LoginForm({
                     autoComplete="current-password"
                   />
                 </div>
-                <div className="flex justify-center transform scale-[0.85] -mx-7 sm:scale-100 sm:mx-0">
-                  <ReCAPTCHA
-                    sitekey={import.meta.env.VITE_CAPTCHA_KEY}
-                    onChange={handleCaptchaChange}
-                  />
-                </div>
+
                 {error && (
                   <div className="text-destructive text-sm text-center">
                     {error}
