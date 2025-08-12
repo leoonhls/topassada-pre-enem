@@ -61,7 +61,7 @@ export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
   const { getFromCacheOrFetch: getTeacher } =
     useFirebaseDocumentCache<User>("users");
   const { getFromCacheOrFetch: getSubject } =
-    useFirebaseDocumentCache<Subject>("lessons");
+    useFirebaseDocumentCache<Subject>("subjects");
 
   const fetchData = useCallback(async () => {
     try {
