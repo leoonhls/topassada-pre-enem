@@ -24,6 +24,7 @@ const logsCollection = collection(db, "/logs");
 const professorsCollection = collection(db, "professors");
 const subjectsCollection = collection(db, "subjects");
 const schedulesCollection = collection(db, "schedules");
+const presencesCollection = collection(db, "presences");
 
 export {
   app,
@@ -36,4 +37,5 @@ export {
   professorsCollection,
   subjectsCollection,
   schedulesCollection,
+  presencesCollection,
 };

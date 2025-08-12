@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { DaySchedule } from "./DaySchedule";
 import DayScheduleCard from "./DayScheduleCard";
 import { useSchedules } from "./useSchedule";
-import { days } from "./Days";
+import { days, getCurrentDay } from "./Days";
 import { Timestamp } from "firebase/firestore";
 
 export const SchedulesList = memo(() => {
@@ -11,22 +11,6 @@ export const SchedulesList = memo(() => {
   const [loading, setLoading] = useState(true);
 
   const { fetchScheduleAsync } = useSchedules();
-
-  // Função para obter o dia atual da semana
-  const getCurrentDay = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
-
-    const dayMap = {
-      1: "segunda",
-      2: "terça",
-      3: "quarta",
-      4: "quinta",
-      5: "sexta",
-    };
-
-    return dayMap[dayOfWeek as keyof typeof dayMap] || null;
-  };
 
   // Função para ordenar schedules pelos dias da semana
   const sortSchedulesByWeekdays = (schedules: DaySchedule[]) => {

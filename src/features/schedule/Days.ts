@@ -8,3 +8,18 @@ export const periods = {
   fourthPeriod: "21:20-22:00",
 } as const;
 export type Period = (typeof periods)[keyof typeof periods];
+
+export const getCurrentDay = () => {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
+
+  const dayMap = {
+    1: "segunda",
+    2: "terça",
+    3: "quarta",
+    4: "quinta",
+    5: "sexta",
+  };
+
+  return dayMap[dayOfWeek as keyof typeof dayMap] || null;
+};

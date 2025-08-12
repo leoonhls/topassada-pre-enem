@@ -18,6 +18,10 @@ import { SelectSearchConstants } from "@/components/common/SelectSearchConstants
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
 import { User } from "../user/User";
 import { Subject } from "../subject/Subject";
+import { addDocWithLog, setDocWithLog } from "@/firebase/firestoreWithLog";
+import { presencesCollection } from "@/firebase/config";
+import { doc, Timestamp } from "firebase/firestore";
+import { toast } from "sonner";
 
 type Props = {
   timeSlot: TimeSlot;
@@ -62,13 +66,27 @@ export default function MarkPresenceDialog({ timeSlot, onSave }: Props) {
     fetchData();
   }, [fetchData, getTeacher, getSubject]);
 
-  const handleSave = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("Salvando presença:", formData);
+    try {
+      const presenceId = doc(presencesCollection).id;
+      const subjectDocRef = doc(presencesCollection, presenceId);
+      await setDocWithLog(
+        subjectDocRef,
+        {
+          ...timeSlot,
+          id: presenceId,
+          createdAt: Timestamp.now(),
+          ...formData,
+        },
+        "Log aqui"
+      );
+      toast.success("Presença salva com sucesso!");
 
-    setFormData({ presence: "", justification: "" });
-    setIsOpen(false);
+      setFormData({ presence: "", justification: "" });
+      setIsOpen(false);
+    } catch (error) {}
   };
 
   return (
@@ -94,7 +112,7 @@ export default function MarkPresenceDialog({ timeSlot, onSave }: Props) {
           id="presenceMark"
           className="space-y-4 max-h-[50vh] overflow-y-auto p-2"
           onSubmit={(e) => {
-            handleSave(e);
+            handleSubmit(e);
           }}>
           <SelectSearchConstants
             options={[
