@@ -34,6 +34,7 @@ export function SelectSearchDB({
   placeholder = "Pesquisar...",
 }: Props) {
   const [inputValue, setInputValue] = useState("");
+  const [allOptions, setAllOptions] = useState<Option[]>([]); // Armazena todas as opções
   const [options, setOptions] = useState<Option[]>([]);
   const [value, setValue] = useState<SingleValue<Option> | MultiValue<Option>>(
     null
@@ -45,16 +46,8 @@ export function SelectSearchDB({
 
   const fetchOptions = useCallback(
     async (term: string) => {
-      if (term.length < 2) {
-        setOptions([]);
-        return;
-      }
-
       try {
         setLoading(true);
-
-        const searchTerm = term.toLowerCase();
-        const searchTermEnd = searchTerm + "\uf8ff"; // Caractere de fim para range query
 
         if (collections && collections.length > 0) {
           // Verifica cache primeiro
@@ -68,13 +61,7 @@ export function SelectSearchDB({
               return;
             }
 
-            const q = query(
-              coll,
-              where("name", ">=", searchTerm),
-              where("name", "<=", searchTermEnd),
-              where("active", "==", true),
-              orderBy("name")
-            );
+            const q = query(coll, where("active", "==", true), orderBy("name"));
 
             const snapshot = await getDocs(q);
 
@@ -100,8 +87,6 @@ export function SelectSearchDB({
           // Cria query com filtro server-side
           const q = query(
             collection,
-            where("name", ">=", searchTerm),
-            where("name", "<=", searchTermEnd),
             where("active", "==", true),
             orderBy("name")
           );
@@ -135,9 +120,57 @@ export function SelectSearchDB({
     };
   }, [debouncedFetch]);
 
+  // Busca todas as opções ao montar
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        let fetched: Option[] = [];
+        if (collections && collections.length > 0) {
+          for (const coll of collections) {
+            const q = query(coll, where("active", "==", true), orderBy("name"));
+            const snapshot = await getDocs(q);
+            const optionsFromColl = snapshot.docs.map((doc) => ({
+              value: doc.id,
+              label: capitalizeWords(doc.data().name),
+            }));
+            fetched.push(...optionsFromColl);
+          }
+        } else if (collection) {
+          const q = query(
+            collection,
+            where("active", "==", true),
+            orderBy("name")
+          );
+          const snapshot = await getDocs(q);
+          fetched = snapshot.docs.map((doc) => ({
+            value: doc.id,
+            label: capitalizeWords(doc.data().name),
+          }));
+        }
+        setAllOptions(fetched);
+        setOptions(fetched);
+      } catch (error) {
+        console.error("Error fetching all options:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [collection, collections]);
+
+  // Filtra as opções no client-side, ignorando maiúsculas/minúsculas
   const handleInputChange = (newValue: string) => {
     setInputValue(newValue);
-    debouncedFetch(newValue);
+    if (newValue.length === 0) {
+      setOptions(allOptions);
+    } else {
+      setOptions(
+        allOptions.filter((opt) =>
+          opt.label.toLowerCase().includes(newValue.toLowerCase())
+        )
+      );
+    }
   };
 
   const handleChange = (newValue: SingleValue<Option> | MultiValue<Option>) => {
@@ -168,13 +201,10 @@ export function SelectSearchDB({
           : "Nenhum resultado encontrado"
       }
       classNamePrefix="select"
-      menuPortalTarget={
-        typeof window !== "undefined" ? document.body : undefined
-      }
       styles={{
-        menuPortal: (base) => ({
+        menu: (base) => ({
           ...base,
-          zIndex: 9999, // Garante que o dropdown fique acima do dialog
+          zIndex: 2147483647, // Máximo z-index possível para ficar acima do dialog
         }),
       }}
     />

@@ -1,27 +1,46 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { DaySchedule, TimeSlot } from "./DaySchedule";
-import { capitalizeFirstLetter } from "@/utils/stringUtils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { updateDocWithLog } from "@/firebase/firestoreWithLog";
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
-import { User } from "../user/User";
-import { Subject } from "../subject/Subject";
+import { capitalizeFirstLetter } from "@/utils/stringUtils";
+import { doc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Subject } from "../subject/Subject";
+import { User } from "../user/User";
+import { DaySchedule, TimeSlot } from "./DaySchedule";
+import EditDaySchedule from "./EditDaySchedule";
+import { schedulesCollection } from "@/firebase/config";
 
 type Props = {
   daySchedule: DaySchedule;
+  onUpdate: () => void;
 };
 
-export default function DayScheduleCard({ daySchedule }: Props) {
+export default function DayScheduleCard({ daySchedule, onUpdate }: Props) {
+  const handleSave = useCallback(
+    async (updatedScheduleDay: DaySchedule) => {
+      try {
+        const subjectDocRef = doc(schedulesCollection, updatedScheduleDay.id);
+        const message = `Horário de ${updatedScheduleDay.id} atualizado`;
+        await updateDocWithLog(subjectDocRef, updatedScheduleDay, message);
+        toast.success(message);
+
+        onUpdate();
+
+        toast.success("Horário atualizado com sucesso!");
+      } catch (error) {
+        console.error("Erro ao salvar horário:", error);
+        toast.error("Erro ao atualizar horário");
+      }
+    },
+    [onUpdate]
+  );
+
   return (
-    <Card>
-      <CardHeader>
+    <Card className="text-sm">
+      <CardHeader className="flex justify-between items-center">
         <CardTitle>{capitalizeFirstLetter(daySchedule.id)}</CardTitle>
+        <EditDaySchedule scheduleDay={daySchedule} onSave={handleSave} />
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <TimeSlotRow
@@ -51,11 +70,12 @@ type TimeSlotRowProps = {
 };
 
 export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
-  if (!timeSlot) return;
+  if (!timeSlot) return null;
 
   const [data, setData] = useState({
     name: "",
     subject: "",
+    color: "",
   });
 
   const { getFromCacheOrFetch: getTeacher } =
@@ -71,8 +91,9 @@ export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
       ]);
 
       setData({
-        name: teacherData?.name || "N/A",
-        subject: subjectData?.name || "N/A",
+        name: teacherData?.name || "",
+        subject: subjectData?.name || "Sem Aula",
+        color: subjectData?.color || "",
       });
     } catch {}
   }, [timeSlot, getTeacher, getSubject]);
@@ -83,18 +104,22 @@ export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
 
   return (
     <div className="flex border rounded-sm">
-      <div className="bg-violet-600 p-2 px-4 rounded-l-sm text-white">
+      <div
+        className="bg-violet-600 p-2 px-4 rounded-l-sm text-white"
+        style={{ backgroundColor: data.color }}>
         <div className="font-semibold">{horario.split("-")[0]}</div>
         <div className="font-semibold">{horario.split("-")[1]}</div>
       </div>
-      <div className="p-2 pl-5 ">
+      <div className="p-2 pl-5 flex flex-col justify-center">
         <div className="font-semibold">
           {capitalizeFirstLetter(data.subject)}
         </div>
 
-        <div className="text-muted-foreground">
-          {capitalizeFirstLetter(data.name)}
-        </div>
+        {data.name && (
+          <div className="text-muted-foreground">
+            {capitalizeFirstLetter(data.name)}
+          </div>
+        )}
       </div>
     </div>
   );

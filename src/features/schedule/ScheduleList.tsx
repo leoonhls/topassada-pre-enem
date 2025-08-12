@@ -1,33 +1,31 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Schedule } from "./Schedule";
-import { useSchedules } from "./useSchedule";
 import { DaySchedule } from "./DaySchedule";
 import DayScheduleCard from "./DayScheduleCard";
+import { useSchedules } from "./useSchedule";
+import { days } from "./Days";
 
 export const SchedulesList = memo(() => {
-  // Hooks para gerenciar filtros e paginação
-
-  // Estados para dados e carregamento
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [collSize, setCollSize] = useState("");
 
   const { fetchScheduleAsync } = useSchedules();
 
-  // Handler para remoção de item
-  const handleRemove = useCallback((id: string) => {
-    setSchedules((prev) => prev.filter((schedule) => schedule.id !== id));
-  }, []);
+  // Função para ordenar schedules pelos dias da semana
+  const sortSchedulesByWeekdays = (schedules: DaySchedule[]) => {
+    return schedules.sort((a, b) => {
+      const indexA = days.indexOf(a.id as any);
+      const indexB = days.indexOf(b.id as any);
+      return indexA - indexB;
+    });
+  };
 
-  // Função para carregar os dados
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetchScheduleAsync();
-
-      setCollSize(response.collSize.toString());
-      setSchedules(response.items);
+      const sortedSchedules = sortSchedulesByWeekdays(response.items);
+      setSchedules(sortedSchedules);
     } catch (error) {
       console.error(error);
       toast.warning("Erro ao carregar schedulees");
@@ -36,7 +34,6 @@ export const SchedulesList = memo(() => {
     }
   }, []);
 
-  // Carrega dados iniciais ou quando filtros mudam
   useEffect(() => {
     fetchData();
   }, []);
@@ -49,7 +46,11 @@ export const SchedulesList = memo(() => {
         }`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 m-5">
           {schedules.map((schedule) => (
-            <DayScheduleCard key={schedule.id} daySchedule={schedule} />
+            <DayScheduleCard
+              key={schedule.id}
+              daySchedule={schedule}
+              onUpdate={fetchData}
+            />
           ))}
         </div>
       </div>

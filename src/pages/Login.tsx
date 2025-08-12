@@ -1,4 +1,4 @@
-import { LoginForm } from "@/features/users/LoginForm";
+import { LoginForm } from "@/features/user/LoginForm";
 
 function Login() {
   return (
