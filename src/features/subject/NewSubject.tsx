@@ -50,7 +50,11 @@ export const NewSubject: React.FC = () => {
       const subjectId = doc(subjectsCollection).id;
       const subjectDocRef = doc(subjectsCollection, subjectId);
       const message = `Subject ${subject.name} cadastrado`;
-      await setDocWithLog(subjectDocRef, { ...subject, id: subjectId }, message);
+      await setDocWithLog(
+        subjectDocRef,
+        { ...subject, id: subjectId },
+        message
+      );
       toast.success(message);
       setSubject({
         name: "",
