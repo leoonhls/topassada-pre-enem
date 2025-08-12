@@ -9,9 +9,8 @@ export const periods = {
 } as const;
 export type Period = (typeof periods)[keyof typeof periods];
 
-export const getCurrentDay = () => {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
+export const getCurrentDay = (selectedDate: Date) => {
+  const dayOfWeek = selectedDate.getDay(); // 0 = domingo, 1 = segunda, etc.
 
   const dayMap = {
     1: "segunda",

@@ -19,16 +19,21 @@ import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
 import { User } from "../user/User";
 import { Subject } from "../subject/Subject";
 import { addDocWithLog, setDocWithLog } from "@/firebase/firestoreWithLog";
-import { presencesCollection } from "@/firebase/config";
+import { auth, presencesCollection } from "@/firebase/config";
 import { doc, Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
 
 type Props = {
   timeSlot: TimeSlot;
   onSave?: (updatedScheduleDay: DaySchedule) => void;
+  selectedDate?: Date;
 };
 
-export default function MarkPresenceDialog({ timeSlot, onSave }: Props) {
+export default function MarkPresenceDialog({
+  timeSlot,
+  onSave,
+  selectedDate,
+}: Props) {
   const [data, setData] = useState({
     name: "",
     subject: "",
@@ -78,6 +83,8 @@ export default function MarkPresenceDialog({ timeSlot, onSave }: Props) {
           ...timeSlot,
           id: presenceId,
           createdAt: Timestamp.now(),
+          createdBy: auth.currentUser!.uid,
+          presenceDate: selectedDate,
           ...formData,
         },
         "Log aqui"

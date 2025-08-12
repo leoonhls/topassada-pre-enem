@@ -5,10 +5,19 @@ import DayScheduleCard from "./DayScheduleCard";
 import { useSchedules } from "./useSchedule";
 import { days, getCurrentDay } from "./Days";
 import { Timestamp } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const SchedulesList = memo(() => {
+  const today = new Date();
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const selectedDay = getCurrentDay(selectedDate);
+  let currentDaySchedule = schedules.find(
+    (schedule) => schedule.id === selectedDay
+  );
 
   const { fetchScheduleAsync } = useSchedules();
 
@@ -40,25 +49,43 @@ export const SchedulesList = memo(() => {
   }, []);
 
   // Encontra o schedule do dia atual
-  const currentDay = getCurrentDay();
-  const currentDaySchedule = schedules.find(
-    (schedule) => schedule.id === currentDay
-  );
 
   return (
     <div className="m-5">
       {/* Horário do dia atual */}
-      {currentDaySchedule && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Horário de Hoje</h2>
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="flex gap-2">
+          <Input
+            max={today.toISOString().split("T")[0]}
+            className="w-min"
+            type="date"
+            value={selectedDate.toISOString().split("T")[0]}
+            onChange={(e) => {
+              if (!e.target.value) return today;
+              const [year, month, day] = e.target.value.split("-");
+              setSelectedDate(
+                new Date(Number(year), Number(month) - 1, Number(day))
+              );
+            }}
+            required
+          />
+          <Button
+            size={"sm"}
+            onClick={() => {
+              setSelectedDate(today);
+            }}>
+            Hoje
+          </Button>
+        </div>
+        {currentDaySchedule && (
           <DayScheduleCard
             key={currentDaySchedule.id}
             daySchedule={currentDaySchedule}
             onUpdate={fetchData}
             enableMark
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Lista completa de horários */}
       <div className="mb-4">

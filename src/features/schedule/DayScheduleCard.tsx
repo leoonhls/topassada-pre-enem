@@ -18,12 +18,14 @@ type Props = {
   daySchedule: DaySchedule;
   onUpdate: () => void;
   enableMark?: boolean;
+  selectedDate?: Date;
 };
 
 export default function DayScheduleCard({
   daySchedule,
   onUpdate,
   enableMark,
+  selectedDate,
 }: Props) {
   const handleSave = useCallback(
     async (updatedScheduleDay: DaySchedule) => {
@@ -55,21 +57,25 @@ export default function DayScheduleCard({
           horario={"19:00-19:40"}
           timeSlot={daySchedule.timeSlots.firstPeriod}
           enableMark={enableMark}
+          selectedDate={selectedDate}
         />
         <TimeSlotRow
           horario={"19:40-20:20"}
           timeSlot={daySchedule.timeSlots.secondPeriod}
           enableMark={enableMark}
+          selectedDate={selectedDate}
         />
         <TimeSlotRow
           horario={"20:40-21:20"}
           timeSlot={daySchedule.timeSlots.thirdPeriod}
           enableMark={enableMark}
+          selectedDate={selectedDate}
         />
         <TimeSlotRow
           horario={"21:20-22:00"}
           timeSlot={daySchedule.timeSlots.fourthPeriod}
           enableMark={enableMark}
+          selectedDate={selectedDate}
         />
       </CardContent>
     </Card>
@@ -80,12 +86,14 @@ type TimeSlotRowProps = {
   timeSlot: TimeSlot;
   horario: string;
   enableMark?: boolean;
+  selectedDate?: Date;
 };
 
 export function TimeSlotRow({
   timeSlot,
   horario,
   enableMark,
+  selectedDate,
 }: TimeSlotRowProps) {
   if (!timeSlot) return null;
 
@@ -143,7 +151,7 @@ export function TimeSlotRow({
         <div
           className="bg-gray-600 p-2 px-4 rounded-r-sm text-white flex items-center"
           style={{ backgroundColor: data.color }}>
-          <MarkPresenceDialog timeSlot={timeSlot} />
+          <MarkPresenceDialog selectedDate={selectedDate} timeSlot={timeSlot} />
         </div>
       )}
     </div>
