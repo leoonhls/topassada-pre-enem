@@ -10,13 +10,21 @@ import { User } from "../user/User";
 import { DaySchedule, TimeSlot } from "./DaySchedule";
 import EditDaySchedule from "./EditDaySchedule";
 import { schedulesCollection } from "@/firebase/config";
+import { Button } from "@/components/ui/button";
+import { CheckCircle } from "lucide-react";
+import MarkPresenceDialog from "./MarkPresenceDialog";
 
 type Props = {
   daySchedule: DaySchedule;
   onUpdate: () => void;
+  enableMark?: boolean;
 };
 
-export default function DayScheduleCard({ daySchedule, onUpdate }: Props) {
+export default function DayScheduleCard({
+  daySchedule,
+  onUpdate,
+  enableMark,
+}: Props) {
   const handleSave = useCallback(
     async (updatedScheduleDay: DaySchedule) => {
       try {
@@ -39,25 +47,29 @@ export default function DayScheduleCard({ daySchedule, onUpdate }: Props) {
   return (
     <Card className="text-sm">
       <CardHeader className="flex justify-between items-center">
-        <CardTitle>{capitalizeFirstLetter(daySchedule.id)}</CardTitle>
+        <CardTitle>{capitalizeFirstLetter(daySchedule.id)}-Feira</CardTitle>
         <EditDaySchedule scheduleDay={daySchedule} onSave={handleSave} />
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <TimeSlotRow
           horario={"19:00-19:40"}
           timeSlot={daySchedule.timeSlots.firstPeriod}
+          enableMark={enableMark}
         />
         <TimeSlotRow
           horario={"19:40-20:20"}
           timeSlot={daySchedule.timeSlots.secondPeriod}
+          enableMark={enableMark}
         />
         <TimeSlotRow
           horario={"20:40-21:20"}
           timeSlot={daySchedule.timeSlots.thirdPeriod}
+          enableMark={enableMark}
         />
         <TimeSlotRow
           horario={"21:20-22:00"}
           timeSlot={daySchedule.timeSlots.fourthPeriod}
+          enableMark={enableMark}
         />
       </CardContent>
     </Card>
@@ -67,9 +79,14 @@ export default function DayScheduleCard({ daySchedule, onUpdate }: Props) {
 type TimeSlotRowProps = {
   timeSlot: TimeSlot;
   horario: string;
+  enableMark?: boolean;
 };
 
-export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
+export function TimeSlotRow({
+  timeSlot,
+  horario,
+  enableMark,
+}: TimeSlotRowProps) {
   if (!timeSlot) return null;
 
   const [data, setData] = useState({
@@ -103,24 +120,32 @@ export function TimeSlotRow({ timeSlot, horario }: TimeSlotRowProps) {
   }, [fetchData, getTeacher, getSubject]);
 
   return (
-    <div className="flex border rounded-sm">
-      <div
-        className="bg-gray-600 p-2 px-4 rounded-l-sm text-white"
-        style={{ backgroundColor: data.color }}>
-        <div className="font-semibold">{horario.split("-")[0]}</div>
-        <div className="font-semibold">{horario.split("-")[1]}</div>
-      </div>
-      <div className="p-2 pl-5 flex flex-col justify-center">
-        <div className="font-semibold">
-          {capitalizeFirstLetter(data.subject)}
+    <div className="flex justify-between border rounded-sm">
+      <div className="flex">
+        <div
+          className="bg-gray-600 p-2 px-4 rounded-l-sm text-white"
+          style={{ backgroundColor: data.color }}>
+          <div className="font-semibold">{horario.split("-")[0]}</div>
+          <div className="font-semibold">{horario.split("-")[1]}</div>
         </div>
-
-        {data.name && (
-          <div className="text-muted-foreground">
-            {capitalizeFirstLetter(data.name)}
+        <div className="p-2 pl-5 flex flex-col justify-center">
+          <div className="font-semibold">
+            {capitalizeFirstLetter(data.subject)}
           </div>
-        )}
+          {data.name && (
+            <div className="text-muted-foreground">
+              {capitalizeFirstLetter(data.name)}
+            </div>
+          )}
+        </div>
       </div>
+      {enableMark && (
+        <div
+          className="bg-gray-600 p-2 px-4 rounded-r-sm text-white flex items-center"
+          style={{ backgroundColor: data.color }}>
+          <MarkPresenceDialog timeSlot={timeSlot} />
+        </div>
+      )}
     </div>
   );
 }
