@@ -25,6 +25,7 @@ import {
 import { useAuth } from "../../../contexts/AuthContext"; // Importa o contexto de autenticação
 import { isAdm } from "@/utils/utils";
 import { isActiveRoute } from "@/utils/routeUtils";
+import InstallButton from "@/components/InstallButton";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { userData } = useAuth(); // Obtém os dados do usuário do contexto
@@ -53,6 +54,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <InstallButton />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">

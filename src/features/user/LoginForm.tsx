@@ -40,7 +40,7 @@ export function LoginForm({
 
     try {
       await login(email, password);
-      console.log("Login realizado com sucesso");
+      // login realizado com sucesso
       navigate("/");
     } catch (error) {
       setError((error as AuthError).message);

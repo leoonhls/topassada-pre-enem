@@ -65,7 +65,7 @@ export function useFirebaseDocumentCache<T>(collectionName: string) {
       // Verifica se o documento já está em cache
       if (globalCache[collectionName][id]) {
         // logCache("HIT", collectionName, id);
-        console.log("CACHE HIT " + collectionName);
+        // cache hit (silent in production)
         const cachedData = globalCache[collectionName][id];
         return applyCapitalization(cachedData, collectionName) as T;
       }

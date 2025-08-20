@@ -56,5 +56,5 @@ export async function populateSingleVersionSchedules() {
       });
     }
   }
-  console.log("Horários populados com uma versão por período!");
+  // Horários populados com uma versão por período
 }
