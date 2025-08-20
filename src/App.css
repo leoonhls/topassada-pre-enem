@@ -1,0 +1,7 @@
+.no-bounce-scroll {
+  overscroll-behavior: none;
+}
+
+.contained-scroll {
+  overscroll-behavior: contain;
+}

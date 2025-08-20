@@ -9,6 +9,16 @@ function ScheduleManager() {
 
   return (
     <div className="flex flex-col">
+      <div className="flex flex-col gap-4 pt-4 pl-4">
+        <header className="">
+          <div className="max-w-5xl">
+            <h1 className="text-2xl font-bold mb-2">Sistema de Horários</h1>
+            <p className="opacity-90">
+              Quadro de horários e controle de presença.
+            </p>
+          </div>
+        </header>
+      </div>
       <SchedulesList />
     </div>
   );
