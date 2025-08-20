@@ -50,7 +50,7 @@ export default function DayScheduleCard({
         <CardTitle>{capitalizeFirstLetter(daySchedule.id)}-Feira</CardTitle>
         <EditDaySchedule scheduleDay={daySchedule} onSave={onUpdate} />
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="flex flex-col gap-2 min-w-0">
         <TimeSlotRow
           horario={"19:00-19:40"}
           timeSlot={daySchedule.timeSlots.firstPeriod}
@@ -127,18 +127,22 @@ export function TimeSlotRow({
 
   return (
     <div className="flex justify-between border rounded-sm">
-      <div className="flex">
+      <div className="flex flex-1 min-w-0">
         <div
           className="bg-gray-600 p-2 px-4 rounded-l-sm text-white"
           style={{ backgroundColor: data.color }}>
           <div className="font-semibold">{horario.split("-")[0]}</div>
           <div className="font-semibold">{horario.split("-")[1]}</div>
         </div>
-        <div className="p-2 pl-5 flex flex-col justify-center">
-          <span className="font-semibold">
+        <div className="p-2 pl-5 flex flex-col justify-center flex-1 min-w-0">
+          <span
+            className="font-semibold truncate block w-full"
+            title={capitalizeFirstLetter(data.subject)}>
             {capitalizeFirstLetter(data.subject)}
           </span>
-          <span className="text-muted-foreground truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+          <span
+            className="text-muted-foreground mr-2 truncate block w-full"
+            title={capitalizeWords(data.name)}>
             {capitalizeWords(data.name)}
           </span>
         </div>
