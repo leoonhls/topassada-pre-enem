@@ -9,6 +9,7 @@ import {
   addDoc,
   Timestamp,
 } from "firebase/firestore";
+import { toast } from "sonner";
 
 /**
  * Atualiza o timeSlot de um dia/período criando uma nova versão e fechando a anterior
@@ -65,4 +66,5 @@ export async function updateTimeSlotVersion(
     validFrom: nowTimestamp,
     validUntil: null,
   });
+  toast.success("Horário alterado com sucesso!");
 }

@@ -48,7 +48,7 @@ export default function DayScheduleCard({
     <Card className="text-sm">
       <CardHeader className="flex justify-between items-center">
         <CardTitle>{capitalizeFirstLetter(daySchedule.id)}-Feira</CardTitle>
-        <EditDaySchedule scheduleDay={daySchedule} onSave={handleSave} />
+        <EditDaySchedule scheduleDay={daySchedule} onSave={onUpdate} />
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <TimeSlotRow
