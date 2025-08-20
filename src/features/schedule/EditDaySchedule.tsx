@@ -1,3 +1,4 @@
+import { SelectSearchDB } from "@/components/common/SelectSearchDB";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,16 +11,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
-import { DaySchedule, TimeSlot } from "./DaySchedule";
-import { capitalizeFirstLetter } from "@/utils/stringUtils";
-import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
-import { User } from "../user/User";
-import { Subject } from "../subject/Subject";
-import { useCallback, useEffect, useState } from "react";
-import { periods } from "./Days";
-import { SelectSearchDB, Option } from "@/components/common/SelectSearchDB";
 import { subjectsCollection, usersCollection } from "@/firebase/config";
+import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
+import { capitalizeFirstLetter } from "@/utils/stringUtils";
+import { Edit } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Subject } from "../subject/Subject";
+import { User } from "../user/User";
+import { periods } from "./Days";
+import { DaySchedule, TimeSlot } from "./DaySchedule";
+import { updateTimeSlotVersion } from "./updateTimeSlotVersion";
+import { populateSingleVersionSchedules } from "@/utils/populateSingleVersionSchedules";
 
 type Props = {
   scheduleDay: DaySchedule;
@@ -56,25 +58,27 @@ export default function EditDaySchedule({ scheduleDay, onSave }: Props) {
     }));
   };
 
-  const handleSave = () => {
-    const updatedScheduleDay = { ...scheduleDay };
-
-    Object.entries(changes).forEach(([timeSlotKey, change]) => {
-      const timeSlot =
-        updatedScheduleDay.timeSlots[
-          timeSlotKey as keyof typeof updatedScheduleDay.timeSlots
-        ];
-      if (timeSlot && !("type" in timeSlot)) {
-        if (change.subjectId) {
-          (timeSlot as TimeSlot).subjectId = change.subjectId;
+  const handleSave = async () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Para cada alteração, cria nova versão e fecha anterior
+    await Promise.all(
+      Object.entries(changes).map(async ([timeSlotKey, change]) => {
+        if (timeSlotKey === "break") return;
+        const slot = (scheduleDay.timeSlots as any)[timeSlotKey];
+        if (change.subjectId || change.teacherId) {
+          await updateTimeSlotVersion(
+            scheduleDay.id,
+            timeSlotKey,
+            change.subjectId || slot.subjectId,
+            change.teacherId || slot.teacherId,
+            today
+          );
         }
-        if (change.teacherId) {
-          (timeSlot as TimeSlot).teacherId = change.teacherId;
-        }
-      }
-    });
-
-    onSave?.(updatedScheduleDay);
+      })
+    );
+    // Opcional: pode chamar onSave para atualizar UI local
+    onSave?.(scheduleDay);
   };
 
   return (
@@ -162,9 +166,9 @@ export function EditTimeSlot({
       ]);
 
       setData({
-        name: teacherData?.name || "N/A",
-        subject: subjectData?.name || "N/A",
-        color: subjectData?.color || "N/A",
+        name: teacherData?.name || "Sem professor",
+        subject: subjectData?.name || "Sem matéria",
+        color: subjectData?.color || "",
       });
     } catch {}
   }, [timeSlot, getTeacher, getSubject]);
@@ -185,7 +189,6 @@ export function EditTimeSlot({
         <div>
           Matéria:
           <SelectSearchDB
-            controlledValue={data.subject}
             placeholder={data.subject}
             collection={subjectsCollection}
             onSelect={(option) => {
@@ -199,7 +202,6 @@ export function EditTimeSlot({
         <div>
           Professor(a):
           <SelectSearchDB
-            controlledValue={data.name}
             placeholder={data.name}
             collection={usersCollection}
             onSelect={(option) => {

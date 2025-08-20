@@ -41,7 +41,7 @@ export function useFirestoreCollection<T extends { id: string }>(
   config: CollectionConfig<T>
 ) {
   const {
-    collectionName,
+    collectionName, 
     pageSize = 6,
     defaultOrderBy = { field: "name" as keyof T },
     fieldsToCapitalize = [],
@@ -56,8 +56,6 @@ export function useFirestoreCollection<T extends { id: string }>(
 
     // Array com as restrições da query
     const queryArray: QueryConstraint[] = [...defaultFilters];
-
-
 
     // Executa a query
     const queryRef = query(coll, ...queryArray);

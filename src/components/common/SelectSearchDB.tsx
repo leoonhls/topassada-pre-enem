@@ -44,8 +44,11 @@ export function SelectSearchDB({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (controlledValue === "") setValue(null);
-  }, [controlledValue]);
+    if (controlledValue === "") {
+      setValue(null);
+      if (onSelect) onSelect(null);
+    }
+  }, [controlledValue, onSelect]);
 
   // Cache em memória
   const cache = useRef<Map<string, Option[]>>(new Map());

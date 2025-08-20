@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { schedulesCollection } from "@/firebase/config";
 import { updateDocWithLog } from "@/firebase/firestoreWithLog";
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
 import { capitalizeFirstLetter } from "@/utils/stringUtils";
@@ -9,9 +10,6 @@ import { Subject } from "../subject/Subject";
 import { User } from "../user/User";
 import { DaySchedule, TimeSlot } from "./DaySchedule";
 import EditDaySchedule from "./EditDaySchedule";
-import { schedulesCollection } from "@/firebase/config";
-import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
 import MarkPresenceDialog from "./MarkPresenceDialog";
 
 type Props = {
