@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { schedulesCollection } from "@/firebase/config";
 import { updateDocWithLog } from "@/firebase/firestoreWithLog";
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
-import { capitalizeFirstLetter } from "@/utils/stringUtils";
+import { capitalizeFirstLetter, capitalizeWords } from "@/utils/stringUtils";
 import { doc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -135,14 +135,12 @@ export function TimeSlotRow({
           <div className="font-semibold">{horario.split("-")[1]}</div>
         </div>
         <div className="p-2 pl-5 flex flex-col justify-center">
-          <div className="font-semibold">
+          <span className="font-semibold">
             {capitalizeFirstLetter(data.subject)}
-          </div>
-          {data.name && (
-            <div className="text-muted-foreground">
-              {capitalizeFirstLetter(data.name)}
-            </div>
-          )}
+          </span>
+          <span className="text-muted-foreground truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">
+            {capitalizeWords(data.name)}
+          </span>
         </div>
       </div>
       {enableMark && (
