@@ -10,14 +10,14 @@ function ScheduleManager() {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-4 pt-4 pl-4">
-        <header className="">
-          <div className="max-w-5xl">
-            <h1 className="text-2xl font-bold mb-2">Sistema de Horários</h1>
-            <p className="opacity-90">
-              Quadro de horários e controle de presença.
-            </p>
-          </div>
-        </header>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
+            Quadro de Horários
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Visualize todas as aulas da semana
+          </p>
+        </div>
       </div>
       <SchedulesList />
     </div>
