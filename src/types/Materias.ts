@@ -1,0 +1,17 @@
+export const Materias = [
+  "Português",
+  "Matemática",
+  "História",
+  "Geografia",
+  "Física",
+  "Química",
+  "Biologia",
+  "Inglês",
+  "Espanhol",
+  "Artes",
+  "Educação Física",
+  "Filosofia",
+  "Sociologia",
+  "Literatura",
+  "Redação",
+];

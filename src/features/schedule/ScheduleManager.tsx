@@ -8,7 +8,7 @@ function ScheduleManager() {
   const [dataHorario, setDataHorario] = useState(Timestamp.now());
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-5">
       <div className="flex flex-col gap-4 pt-4 pl-4">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
