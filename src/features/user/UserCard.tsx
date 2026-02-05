@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Eye } from "lucide-react";
 import { useState } from "react";
-import { Subject } from "../subject/Subject";
 import { User } from "./User";
 
 type UserCardProps = {
@@ -10,8 +9,6 @@ type UserCardProps = {
 };
 
 export default function UserCard({ user }: UserCardProps) {
-  const [lessons, setLessons] = useState<Subject[]>([]);
-
   return (
     <TableRow>
       <TableCell className="font-medium">{user.name}</TableCell>
