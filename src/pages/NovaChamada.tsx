@@ -219,16 +219,13 @@ const NovaChamada: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <fieldset disabled={!editavel}>
           <div className="w-full overflow-x-auto mb-4 rounded-xl border">
-            <Table className="min-w-[480px] text-sm">
+            <Table className=" text-sm">
               <TableHeader>
                 <TableRow>
                   <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
                     Nome
                   </TableHead>
                   <TableHead className="border px-2 py-1">Presença</TableHead>
-                  <TableHead className="border px-2 py-1">
-                    Justificativa
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -250,45 +247,6 @@ const NovaChamada: React.FC = () => {
                         onClick={() => handlePresenca(aluno.id, false)}>
                         X
                       </button>
-                    </TableCell>
-                    <TableCell className="border px-2 py-1">
-                      <button
-                        type="button"
-                        className="px-2 py-1 rounded bg-muted text-foreground"
-                        disabled={chamada[aluno.id]?.presenca !== false}
-                        onClick={() => setOpenDialogId(aluno.id)}>
-                        Justificar
-                      </button>
-                      {openDialogId === aluno.id && (
-                        <Dialog
-                          open={true}
-                          onOpenChange={() => setOpenDialogId(null)}>
-                          <div className="p-4">
-                            <h2 className="text-lg font-semibold mb-2">
-                              Justificativa para{" "}
-                              {getPreferredName(
-                                aluno.nome,
-                                (aluno as any).nome_social,
-                              )}
-                            </h2>
-                            <input
-                              type="text"
-                              className="w-full border rounded px-2 py-1 mb-2"
-                              placeholder="Justificativa (opcional)"
-                              value={chamada[aluno.id]?.justificativa || ""}
-                              onChange={(e) =>
-                                handleJustificativa(aluno.id, e.target.value)
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-                              onClick={() => setOpenDialogId(null)}>
-                              Salvar
-                            </button>
-                          </div>
-                        </Dialog>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))}
