@@ -20,6 +20,7 @@ import { ref, uploadBytes } from "firebase/storage";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { User } from "./User";
+import { PlusSquareIcon } from "lucide-react";
 
 export const NewUser: React.FC = () => {
   const [user, setUser] = useState<Omit<User, "id">>({
@@ -50,7 +51,7 @@ export const NewUser: React.FC = () => {
         }));
       }
     },
-    []
+    [],
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,7 +63,7 @@ export const NewUser: React.FC = () => {
       const cred = await createUserWithEmailAndPassword(
         secundaryAuth,
         user.email,
-        password
+        password,
       );
       let pfpPath = "";
       if (pfpFile) {
@@ -72,7 +73,7 @@ export const NewUser: React.FC = () => {
       await setDocWithLog(
         doc(db, "users", cred.user.uid),
         { ...user, name: user.name.toLowerCase(), createdAt: Timestamp.now() },
-        `Usuário "${user.name}" cadastrado com sucesso.`
+        `Usuário "${user.name}" cadastrado com sucesso.`,
       );
       toast.success("Usuário criado com sucesso!");
       setUser({
@@ -93,7 +94,9 @@ export const NewUser: React.FC = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Novo User</Button>
+        <Button variant={"outline"} size={"sm"}>
+          <PlusSquareIcon />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

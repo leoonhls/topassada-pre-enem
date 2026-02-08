@@ -35,15 +35,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (uid: string) => {
+  const fetchUserData = async (uid: string): Promise<boolean> => {
     const userDoc = await getDoc(doc(db, "users", uid));
     if (userDoc.exists()) {
       const data = userDoc.data() as {
         adm: boolean;
         name: string;
         email: string;
+        active?: boolean;
         pfpPath?: string;
       };
+      if (data.active === false) {
+        // Usuário desativado no Firestore
+        setUserData(null);
+        return false;
+      }
       let pfpUrl = "";
       if (data.pfpPath) {
         try {
@@ -58,8 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: data.email,
         pfpUrl,
       });
+      return true;
     } else {
       setUserData(null);
+      return false;
     }
   };
 
@@ -68,7 +76,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(firebaseUser);
       setLoading(false);
       if (firebaseUser) {
-        await fetchUserData(firebaseUser.uid);
+        const isActive = await fetchUserData(firebaseUser.uid);
+        if (!isActive) {
+          // Se o usuário estiver desativado, faz signOut e limpa estado
+          await signOut(auth);
+          setUser(null);
+        }
       } else {
         setUserData(null);
       }
@@ -79,9 +92,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     setLoading(true);
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    await fetchUserData(cred.user.uid);
-    setLoading(false);
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const isActive = await fetchUserData(cred.user.uid);
+      if (!isActive) {
+        await signOut(auth);
+        setUser(null);
+        throw new Error(
+          "Seu usuário está desativado. Entre em contato com a coordenação.",
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
