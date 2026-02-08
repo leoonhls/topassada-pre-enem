@@ -19,8 +19,22 @@ export const capitalizeWords = (str: string | undefined | null): string => {
  * @returns String com primeira letra capitalizada
  */
 export const capitalizeFirstLetter = (
-  str: string | undefined | null
+  str: string | undefined | null,
 ): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+export const getPreferredName = (
+  nome: string | undefined | null,
+  nomeSocial: string | undefined | null,
+): string => {
+  if (nomeSocial && nomeSocial.trim().length > 0) {
+    return nomeSocial;
+  }
+  if (!nome) return "";
+
+  const parts = nome.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1]}`;
 };

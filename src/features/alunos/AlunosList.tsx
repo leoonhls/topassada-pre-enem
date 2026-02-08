@@ -29,6 +29,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getPreferredName } from "@/utils/stringUtils";
 
 export const AlunosList: React.FC = () => {
   const [alunos, setAlunos] = useState<any[]>([]);
@@ -48,11 +49,6 @@ export const AlunosList: React.FC = () => {
     };
     fetch();
   }, []);
-
-  const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, "alunos", id));
-    setAlunos(alunos.filter((a) => a.id !== id));
-  };
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editForm) return;
@@ -82,29 +78,32 @@ export const AlunosList: React.FC = () => {
 
   return (
     <>
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Nome Social</TableHead>
-            <TableHead>CPF</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead>Ativo</TableHead>
-            {/* <TableHead>Foto</TableHead> */}
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {alunos.map((aluno) => (
-            <TableRow key={aluno.id}>
-              <TableCell>{aluno.nome}</TableCell>
-              <TableCell>{aluno.nome_social}</TableCell>
-              <TableCell>{aluno.cpf}</TableCell>
-              <TableCell>{aluno.email}</TableCell>
-              <TableCell>{aluno.phone}</TableCell>
-              <TableCell>{aluno.active ? "Sim" : "Não"}</TableCell>
-              {/* <TableCell>
+      <div className="w-full overflow-x-auto">
+        <Table className="min-w-[640px] text-xs sm:text-sm">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="sticky left-0 z-10 bg-white">
+                Nome
+              </TableHead>
+              <TableHead>CPF</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Ativo</TableHead>
+              {/* <TableHead>Foto</TableHead> */}
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {alunos.map((aluno) => (
+              <TableRow key={aluno.id}>
+                <TableCell className="sticky left-0 z-10 bg-white">
+                  {getPreferredName(aluno.nome, aluno.nome_social)}
+                </TableCell>
+                <TableCell>{aluno.cpf}</TableCell>
+                <TableCell>{aluno.email}</TableCell>
+                <TableCell>{aluno.phone}</TableCell>
+                <TableCell>{aluno.active ? "Sim" : "Não"}</TableCell>
+                {/* <TableCell>
                 {aluno.pfpPath ? (
                   <img
                     src={aluno.pfpPath}
@@ -115,18 +114,19 @@ export const AlunosList: React.FC = () => {
                   "-"
                 )}
               </TableCell> */}
-              <TableCell className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditForm(aluno)}>
-                  Editar
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                <TableCell className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditForm(aluno)}>
+                    Editar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <Dialog
         open={!!editForm}
         onOpenChange={(open) => !open && setEditForm(null)}>

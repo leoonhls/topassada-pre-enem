@@ -12,10 +12,12 @@ import { Switch } from "../components/ui/switch";
 import { collection, getDocs, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
+import { getPreferredName } from "@/utils/stringUtils";
 
 interface Aluno {
   id: string;
   nome: string;
+  nome_social?: string;
 }
 
 interface ChamadaAluno {
@@ -200,75 +202,83 @@ const NovaChamada: React.FC = () => {
       )}
       <form onSubmit={handleSubmit}>
         <fieldset disabled={!editavel}>
-          <Table className="w-full mb-4 border rounded-xl overflow-hidden">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="border px-2 py-1">Nome</TableHead>
-                <TableHead className="border px-2 py-1">Presença</TableHead>
-                <TableHead className="border px-2 py-1">
-                  Justificativa
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {alunos.map((aluno) => (
-                <TableRow key={aluno.id}>
-                  <TableCell className="border px-2 py-1">
-                    {aluno.nome}
-                  </TableCell>
-                  <TableCell className="border px-2 py-1 text-center">
-                    <button
-                      type="button"
-                      className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-green-500 text-white" : "bg-gray-200"}`}
-                      onClick={() => handlePresenca(aluno.id, true)}>
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-red-500 text-white" : "bg-gray-200"}`}
-                      onClick={() => handlePresenca(aluno.id, false)}>
-                      X
-                    </button>
-                  </TableCell>
-                  <TableCell className="border px-2 py-1">
-                    <button
-                      type="button"
-                      className="px-2 py-1 rounded bg-gray-200 text-gray-700"
-                      disabled={chamada[aluno.id]?.presenca !== false}
-                      onClick={() => setOpenDialogId(aluno.id)}>
-                      Justificar
-                    </button>
-                    {openDialogId === aluno.id && (
-                      <Dialog
-                        open={true}
-                        onOpenChange={() => setOpenDialogId(null)}>
-                        <div className="p-4">
-                          <h2 className="text-lg font-semibold mb-2">
-                            Justificativa para {aluno.nome}
-                          </h2>
-                          <input
-                            type="text"
-                            className="w-full border rounded px-2 py-1 mb-2"
-                            placeholder="Justificativa (opcional)"
-                            value={chamada[aluno.id]?.justificativa || ""}
-                            onChange={(e) =>
-                              handleJustificativa(aluno.id, e.target.value)
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            onClick={() => setOpenDialogId(null)}>
-                            Salvar
-                          </button>
-                        </div>
-                      </Dialog>
-                    )}
-                  </TableCell>
+          <div className="w-full overflow-x-auto mb-4 rounded-xl border">
+            <Table className="min-w-[480px] text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="border px-2 py-1 sticky left-0 bg-white z-10">
+                    Nome
+                  </TableHead>
+                  <TableHead className="border px-2 py-1">Presença</TableHead>
+                  <TableHead className="border px-2 py-1">
+                    Justificativa
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {alunos.map((aluno) => (
+                  <TableRow key={aluno.id}>
+                    <TableCell className="border px-2 py-1 sticky left-0 bg-white z-10">
+                      {getPreferredName(aluno.nome, (aluno as any).nome_social)}
+                    </TableCell>
+                    <TableCell className="border px-2 py-1 text-center">
+                      <button
+                        type="button"
+                        className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-green-500 text-white" : "bg-gray-200"}`}
+                        onClick={() => handlePresenca(aluno.id, true)}>
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-red-500 text-white" : "bg-gray-200"}`}
+                        onClick={() => handlePresenca(aluno.id, false)}>
+                        X
+                      </button>
+                    </TableCell>
+                    <TableCell className="border px-2 py-1">
+                      <button
+                        type="button"
+                        className="px-2 py-1 rounded bg-gray-200 text-gray-700"
+                        disabled={chamada[aluno.id]?.presenca !== false}
+                        onClick={() => setOpenDialogId(aluno.id)}>
+                        Justificar
+                      </button>
+                      {openDialogId === aluno.id && (
+                        <Dialog
+                          open={true}
+                          onOpenChange={() => setOpenDialogId(null)}>
+                          <div className="p-4">
+                            <h2 className="text-lg font-semibold mb-2">
+                              Justificativa para{" "}
+                              {getPreferredName(
+                                aluno.nome,
+                                (aluno as any).nome_social,
+                              )}
+                            </h2>
+                            <input
+                              type="text"
+                              className="w-full border rounded px-2 py-1 mb-2"
+                              placeholder="Justificativa (opcional)"
+                              value={chamada[aluno.id]?.justificativa || ""}
+                              onChange={(e) =>
+                                handleJustificativa(aluno.id, e.target.value)
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                              onClick={() => setOpenDialogId(null)}>
+                              Salvar
+                            </button>
+                          </div>
+                        </Dialog>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

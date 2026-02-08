@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { db } from "@/firebase/config";
 import { doc, updateDoc } from "firebase/firestore";
+import { getPreferredName } from "@/utils/stringUtils";
 
 export const UsersList = memo(() => {
   // Hooks para gerenciar filtros e paginação
@@ -83,39 +84,45 @@ export const UsersList = memo(() => {
 
   return (
     <div>
-      <Table>
-        <TableHeader className="italic">
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CPF</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead>Nível</TableHead>
-            <TableHead>Ativo</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.name}</TableCell>
-              <TableCell>{user.cpf}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.phone}</TableCell>
-              <TableCell className="capitalize">{user.nivel}</TableCell>
-              <TableCell>{user.active ? "Sim" : "Não"}</TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditUser(user)}>
-                  Editar
-                </Button>
-              </TableCell>
+      <div className="w-full overflow-x-auto mb-2">
+        <Table className="min-w-[640px] text-xs sm:text-sm">
+          <TableHeader className="italic">
+            <TableRow>
+              <TableHead className="sticky left-0 z-10 bg-white">
+                Nome
+              </TableHead>
+              <TableHead>CPF</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Nível</TableHead>
+              <TableHead>Ativo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium sticky left-0 z-10 bg-white">
+                  {getPreferredName(user.name, (user as any).nome_social)}
+                </TableCell>
+                <TableCell>{user.cpf}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.phone}</TableCell>
+                <TableCell className="capitalize">{user.nivel}</TableCell>
+                <TableCell>{user.active ? "Sim" : "Não"}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditUser(user)}>
+                    Editar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Indicador de Carregamento */}
       {loading && (
@@ -150,6 +157,18 @@ export const UsersList = memo(() => {
                   onChange={(e) => handleEditChange("name", e.target.value)}
                   placeholder="Nome"
                   required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Nome social (opcional)
+                </Label>
+                <Input
+                  value={(editUser as any).nome_social || ""}
+                  onChange={(e) =>
+                    handleEditChange("nome_social" as any, e.target.value)
+                  }
+                  placeholder="Nome social"
                 />
               </div>
               <div className="flex flex-col gap-1.5">

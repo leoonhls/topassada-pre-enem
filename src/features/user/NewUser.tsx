@@ -25,6 +25,7 @@ import { PlusSquareIcon } from "lucide-react";
 export const NewUser: React.FC = () => {
   const [user, setUser] = useState<Omit<User, "id">>({
     name: "",
+    nome_social: "",
     cpf: "",
     phone: "",
     email: "",
@@ -72,12 +73,17 @@ export const NewUser: React.FC = () => {
       }
       await setDocWithLog(
         doc(db, "users", cred.user.uid),
-        { ...user, name: user.name.toLowerCase(), createdAt: Timestamp.now() },
+        {
+          ...user,
+          name: user.name.toLowerCase(),
+          createdAt: Timestamp.now(),
+        },
         `Usuário "${user.name}" cadastrado com sucesso.`,
       );
       toast.success("Usuário criado com sucesso!");
       setUser({
         name: "",
+        nome_social: "",
         cpf: "",
         phone: "",
         email: "",
@@ -113,6 +119,17 @@ export const NewUser: React.FC = () => {
               value={user.name}
               onChange={(e) => setUser({ ...user, name: e.target.value })}
               required
+            />
+          </div>
+          <div className=" flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">
+              Nome social (opcional)
+            </Label>
+            <Input
+              value={user.nome_social || ""}
+              onChange={(e) =>
+                setUser({ ...user, nome_social: e.target.value })
+              }
             />
           </div>
           <div className=" flex flex-col gap-1.5">

@@ -41,15 +41,15 @@ function ScheduleManager() {
   }, []);
 
   return (
-    <div className="flex flex-col px-5">
-      <div className="flex flex-col gap-4 pt-4 pl-4">
+    <div className="flex flex-col px-3 md:px-5">
+      <div className="flex flex-col gap-4 pt-4 px-2 md:px-4">
         <div>
-          <div className="flex gap-5">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-start sm:items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
               Quadro de Horários
             </h1>
             {schedulesByDay && isAdmin && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <EditFullSchedule
                   days={schedulesByDay}
                   onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
@@ -69,13 +69,15 @@ function ScheduleManager() {
       </div>
 
       <div
-        className={`mt-4 space-y-4 transition-opacity duration-200 flex flex-wrap gap-5 ${loading ? "opacity-50" : "opacity-100"}`}>
+        className={`mt-4 space-y-4 transition-opacity duration-200 flex flex-wrap gap-4 md:gap-5 justify-center md:justify-start ${loading ? "opacity-50" : "opacity-100"}`}>
         {days.map((day, idx) => {
           const dayObj = schedulesByDay?.find((d) => d.day === day);
           return (
-            <div key={day} className="mb-6 border px-5 py-3 rounded ">
-              <div className="flex justify-between">
-                <h3 className="text-lg font-bold capitalize mb-2">
+            <div
+              key={day}
+              className="mb-4 md:mb-6 border px-3 py-2 md:px-5 md:py-3 rounded w-full md:w-auto">
+              <div className="flex justify-between items-center">
+                <h3 className="text-base md:text-lg font-bold capitalize mb-2">
                   {capitalizeFirstLetter(day)}-Feira
                 </h3>
               </div>

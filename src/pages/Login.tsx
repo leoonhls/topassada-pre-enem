@@ -2,7 +2,7 @@ import { LoginForm } from "@/features/user/LoginForm";
 
 function Login() {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-evenly bg-muted">
+    <div className="flex flex-col min-h-screen items-center justify-evenly bg-muted px-4">
       <LoginForm />
     </div>
     // <div className="bg-muted flex h-full justify-center gap-6 p-3 items-center">

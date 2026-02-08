@@ -5,21 +5,14 @@ import { AlunosList } from "./AlunosList";
 
 const AlunosManager: React.FC = () => {
   return (
-    <div className="p-3">
-      <div className="flex p-5 gap-3 items-center">
-        <h2 className="text-2xl font-bold text-gray-800 items-center">
+    <div className="p-3 flex flex-col gap-4">
+      <div className="flex px-3 md:px-5 gap-3 md:gap-4 items-center justify-between">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 items-center">
           Gestão de Alunos
         </h2>
         <NewAluno />
       </div>
-      <Card>
-        <CardHeader>
-          <h3 className="px-3">Alunos Cadastrados</h3>
-        </CardHeader>
-        <CardContent>
-          <AlunosList />
-        </CardContent>
-      </Card>
+      <AlunosList />
     </div>
   );
 };

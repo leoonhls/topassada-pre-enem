@@ -26,10 +26,12 @@ import {
   DialogClose,
 } from "../components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { getPreferredName } from "@/utils/stringUtils";
 
 interface Aluno {
   id: string;
   nome: string;
+  nome_social?: string;
 }
 
 interface ChamadaAluno {
@@ -98,14 +100,14 @@ const ChamadasTabela: React.FC = () => {
 
   // Monta tabela: linhas = alunos, colunas = dias
   return (
-    <div className="overflow-x-auto bg-pink-50 rounded-xl shadow-lg p-6">
-      <h1 className="text-3xl font-extrabold mb-6 text-pink-600">
+    <div className="overflow-x-auto bg-pink-50 rounded-xl shadow-lg p-4 md:p-6">
+      <h1 className="text-2xl md:text-3xl font-extrabold mb-4 md:mb-6 text-pink-600">
         Chamadas dos últimos 30 dias 🐻
       </h1>
-      <Table className="rounded-xl overflow-hidden border border-pink-200 text-center">
+      <Table className="rounded-xl overflow-hidden border border-pink-200 text-center min-w-[640px] text-xs sm:text-sm">
         <TableHeader>
           <TableRow className="bg-pink-100">
-            <TableHead className="text-pink-700 text-lg text-center">
+            <TableHead className="text-pink-700 text-lg text-center sticky left-0 z-20 bg-pink-100">
               Aluno
             </TableHead>
             {dias.map((dia) => {
@@ -133,8 +135,8 @@ const ChamadasTabela: React.FC = () => {
             <TableRow
               key={aluno.id}
               className="hover:bg-pink-100 transition-all">
-              <TableCell className="font-semibold text-pink-600 bg-pink-50 text-center">
-                {aluno.nome}
+              <TableCell className="font-semibold text-pink-600 bg-pink-50 text-center sticky left-0 z-10">
+                {getPreferredName(aluno.nome, (aluno as any).nome_social)}
               </TableCell>
               {dias.map((dia) => {
                 const chamadaDia = chamadas.find((c) => c.dia === dia);
