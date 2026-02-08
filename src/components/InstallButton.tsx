@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { getDeferredPrompt, clearDeferredPrompt } from "@/pwa/deferredPrompt";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+}
+
 function isIOS() {
+  if (typeof navigator === "undefined") return false;
   return (
     /iPhone|iPad|iPod/.test(navigator.userAgent) && !(window as any).MSStream
   );
@@ -21,18 +30,29 @@ function isMobileOrTablet() {
   }
   return false;
 }
-
 export default function InstallButton() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
-  const [swControlling, setSwControlling] = useState<boolean | null>(null);
-  const [manifestOk, setManifestOk] = useState<boolean | null>(null);
+  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
     // Adopt any prompt captured by main via the module storage
     try {
-      const p = getDeferredPrompt();
+      const p = getDeferredPrompt() as BeforeInstallPromptEvent | null;
       if (p) setDeferredPrompt(p);
+    } catch (err) {}
+
+    // Detect if app is already running in standalone mode
+    try {
+      if (typeof window !== "undefined") {
+        const isStandalone =
+          window.matchMedia?.("(display-mode: standalone)").matches ||
+          (navigator as any)?.standalone === true;
+        if (isStandalone) {
+          setInstalled(true);
+        }
+      }
     } catch (err) {}
 
     return () => {
@@ -43,10 +63,12 @@ export default function InstallButton() {
   async function handleInstall() {
     if (deferredPrompt) {
       try {
-        // @ts-ignore
         await deferredPrompt.prompt();
-        // @ts-ignore
-        await deferredPrompt.userChoice;
+        const choice = await deferredPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+          setInstalled(true);
+          setShowInstructions(false);
+        }
         setDeferredPrompt(null);
         try {
           clearDeferredPrompt();
@@ -62,7 +84,7 @@ export default function InstallButton() {
   }
 
   // Only render on mobile/tablet-like devices
-  if (!isMobileOrTablet()) return null;
+  if (!isMobileOrTablet() || installed) return null;
 
   return (
     <div>
