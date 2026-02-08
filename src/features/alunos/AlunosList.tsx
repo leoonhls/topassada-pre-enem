@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const AlunosList: React.FC = () => {
   const [alunos, setAlunos] = useState<any[]>([]);
@@ -90,7 +91,7 @@ export const AlunosList: React.FC = () => {
             <TableHead>Email</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Ativo</TableHead>
-            <TableHead>Foto</TableHead>
+            {/* <TableHead>Foto</TableHead> */}
             <TableHead>Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -103,7 +104,7 @@ export const AlunosList: React.FC = () => {
               <TableCell>{aluno.email}</TableCell>
               <TableCell>{aluno.phone}</TableCell>
               <TableCell>{aluno.active ? "Sim" : "Não"}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 {aluno.pfpPath ? (
                   <img
                     src={aluno.pfpPath}
@@ -113,7 +114,7 @@ export const AlunosList: React.FC = () => {
                 ) : (
                   "-"
                 )}
-              </TableCell>
+              </TableCell> */}
               <TableCell className="space-x-2">
                 <Button
                   variant="outline"
@@ -143,53 +144,81 @@ export const AlunosList: React.FC = () => {
                 handleSaveEdit();
               }}
               className="flex flex-col gap-3">
-              <Input
-                name="nome"
-                value={editForm.nome || ""}
-                onChange={handleEditChange}
-                placeholder="Nome"
-                className="border rounded px-2 py-1"
-                required
-              />
-              <Input
-                name="nome_social"
-                value={editForm.nome_social || ""}
-                onChange={handleEditChange}
-                placeholder="Nome social"
-                className="border rounded px-2 py-1"
-              />
-              <Input
-                name="cpf"
-                value={editForm.cpf || ""}
-                onChange={handleEditChange}
-                placeholder="CPF"
-                className="border rounded px-2 py-1"
-                required
-              />
-              <Input
-                name="email"
-                value={editForm.email || ""}
-                onChange={handleEditChange}
-                placeholder="Email"
-                className="border rounded px-2 py-1"
-                required
-              />
-              <Input
-                name="phone"
-                value={editForm.phone || ""}
-                onChange={handleEditChange}
-                placeholder="Telefone"
-                className="border rounded px-2 py-1"
-              />
-              <Input
-                name="pfpPath"
-                value={editForm.pfpPath || ""}
-                onChange={handleEditChange}
-                placeholder="URL da foto (opcional)"
-                className="border rounded px-2 py-1"
-              />
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Nome
+                </Label>
+                <Input
+                  name="nome"
+                  value={editForm.nome || ""}
+                  onChange={handleEditChange}
+                  placeholder="Nome"
+                  className="border rounded px-2 py-1"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Nome social
+                </Label>
+                <Input
+                  name="nome_social"
+                  value={editForm.nome_social || ""}
+                  onChange={handleEditChange}
+                  placeholder="Nome social"
+                  className="border rounded px-2 py-1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">CPF</Label>
+                <Input
+                  name="cpf"
+                  value={editForm.cpf || ""}
+                  onChange={handleEditChange}
+                  placeholder="CPF"
+                  className="border rounded px-2 py-1"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Email
+                </Label>
+                <Input
+                  name="email"
+                  value={editForm.email || ""}
+                  onChange={handleEditChange}
+                  placeholder="Email"
+                  className="border rounded px-2 py-1"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Telefone
+                </Label>
+                <Input
+                  name="phone"
+                  value={editForm.phone || ""}
+                  onChange={handleEditChange}
+                  placeholder="Telefone"
+                  className="border rounded px-2 py-1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  URL da foto (opcional)
+                </Label>
+                <Input
+                  name="pfpPath"
+                  value={editForm.pfpPath || ""}
+                  onChange={handleEditChange}
+                  placeholder="URL da foto (opcional)"
+                  className="border rounded px-2 py-1"
+                />
+              </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Ativo</span>
+                <Label className="text-sm font-medium">Ativo</Label>
                 <Switch
                   checked={!!editForm.active}
                   onCheckedChange={handleToggleActive}

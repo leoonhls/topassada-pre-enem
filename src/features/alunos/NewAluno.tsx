@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const NewAluno: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -70,49 +71,68 @@ export const NewAluno: React.FC = () => {
             handleAdd();
           }}
           className="flex flex-col gap-3">
-          <Input
-            name="nome"
-            value={form.nome}
-            onChange={handleChange}
-            placeholder="Nome"
-            className="border rounded px-2 py-1"
-            required
-            disabled={loading}
-          />
-          <Input
-            name="nome_social"
-            value={form.nome_social}
-            onChange={handleChange}
-            placeholder="Nome social"
-            className="border rounded px-2 py-1"
-            disabled={loading}
-          />
-          <Input
-            name="cpf"
-            value={form.cpf}
-            onChange={handleChange}
-            placeholder="CPF"
-            className="border rounded px-2 py-1"
-            required
-            disabled={loading}
-          />
-          <Input
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="border rounded px-2 py-1"
-            required
-            disabled={loading}
-          />
-          <Input
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="Telefone"
-            className="border rounded px-2 py-1"
-            disabled={loading}
-          />
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">Nome</Label>
+            <Input
+              name="nome"
+              value={form.nome}
+              onChange={handleChange}
+              placeholder="Nome"
+              className="border rounded px-2 py-1"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">
+              Nome social
+            </Label>
+            <Input
+              name="nome_social"
+              value={form.nome_social}
+              onChange={handleChange}
+              placeholder="Nome social"
+              className="border rounded px-2 py-1"
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">CPF</Label>
+            <Input
+              name="cpf"
+              value={form.cpf}
+              onChange={handleChange}
+              placeholder="CPF"
+              className="border rounded px-2 py-1"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">Email</Label>
+            <Input
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="border rounded px-2 py-1"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">
+              Telefone
+            </Label>
+            <Input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="Telefone"
+              className="border rounded px-2 py-1"
+              disabled={loading}
+            />
+          </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" type="button" disabled={loading}>
