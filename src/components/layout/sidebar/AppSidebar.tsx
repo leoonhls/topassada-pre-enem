@@ -26,6 +26,7 @@ import { useAuth } from "../../../contexts/AuthContext"; // Importa o contexto d
 import { isAdm } from "@/utils/utils";
 import { isActiveRoute } from "@/utils/routeUtils";
 import InstallButton from "@/components/InstallButton";
+import appIcon from "@/assets/to-passada-icon.png";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { userData } = useAuth(); // Obtém os dados do usuário do contexto
@@ -73,22 +74,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <InstallButton />
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src="src\assets\topassada-pre-enem-icon.png"
-                    alt="Tô Passada!"
-                  />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Tô Passada!</span>
-                  <span className="text-muted-foreground text-sm">
-                    Araguari
-                  </span>
-                </div>
-              </a>
+            <SidebarMenuButton size="lg">
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={appIcon} alt="Tô Passada!" />
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-semibold">Tô Passada!</span>
+                <span className="text-muted-foreground text-sm">Araguari</span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
