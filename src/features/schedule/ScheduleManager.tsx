@@ -14,6 +14,7 @@ import EditFullSchedule from "./EditFullSchedule";
 import { fetchSchedulesByDay } from "./fetchSchedulesByDay";
 import { horarios } from "./horarios";
 import { isAdm } from "@/utils/utils";
+import { Button } from "@/components/ui/button";
 
 function ScheduleManager() {
   const [schedulesByDay, setSchedulesByDay] = useState<Day[]>();
@@ -48,13 +49,15 @@ function ScheduleManager() {
               Quadro de Horários
             </h1>
             {schedulesByDay && isAdmin && (
-              <div>
+              <div className="flex gap-2">
                 <EditFullSchedule
                   days={schedulesByDay}
                   onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
                 />
                 <a href="/chamada">
-                  <button>"Nova Chamada"</button>
+                  <Button size={"sm"} variant={"outline"}>
+                    Nova Chamada
+                  </Button>
                 </a>
               </div>
             )}

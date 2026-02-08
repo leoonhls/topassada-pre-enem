@@ -24,6 +24,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Edit } from "lucide-react";
 
 // Recebe todos os dias e permite editar o quadro inteiro
 export default function EditFullSchedule({
@@ -95,7 +96,9 @@ export default function EditFullSchedule({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">Editar Quadro Completo</Button>
+        <Button size={"sm"} variant="outline">
+          <Edit />
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-3xl">
         <AlertDialogHeader>

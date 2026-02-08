@@ -60,8 +60,24 @@ export const DevPopulateData: React.FC = () => {
     setLoading(true);
     const alunosSnapshot = await getDocs(collection(db, "alunos"));
     if (alunosSnapshot.size === 0) {
-      for (const nome of nomes) {
-        await addDoc(collection(db, "alunos"), { nome });
+      for (let index = 0; index < nomes.length; index++) {
+        const nome = nomes[index];
+        const emailLocal = nome
+          .normalize("NFD")
+          .replace(/[^a-zA-Z\s]/g, "")
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, ".");
+
+        await addDoc(collection(db, "alunos"), {
+          nome,
+          nome_social: nome,
+          cpf: String(10000000000 + index).padStart(11, "0"),
+          email: `${emailLocal || "aluno"}${index + 1}@exemplo.com`,
+          phone: "11999990000",
+          active: true,
+          pfpPath: "",
+        });
       }
     }
   };

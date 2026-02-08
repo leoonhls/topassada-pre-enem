@@ -16,6 +16,7 @@ import Management from "./features/Management";
 import ScheduleManager from "./features/schedule/ScheduleManager";
 import NovaChamada from "./pages/NovaChamada";
 import ChamadasTabela from "./pages/ChamadasTabela";
+import AlunosManager from "./features/alunos/AlunosManager";
 
 function App() {
   const router = createBrowserRouter(
@@ -43,7 +44,7 @@ function App() {
             path="alunos"
             element={
               <ProtectedRoute>
-                <Management />
+                <AlunosManager />
               </ProtectedRoute>
             }
           />
