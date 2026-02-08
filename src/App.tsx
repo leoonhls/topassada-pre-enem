@@ -14,6 +14,8 @@ import { ThemeProvider } from "./components/common/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import Management from "./features/Management";
 import ScheduleManager from "./features/schedule/ScheduleManager";
+import NovaChamada from "./pages/NovaChamada";
+import ChamadasTabela from "./pages/ChamadasTabela";
 
 function App() {
   const router = createBrowserRouter(
@@ -37,9 +39,25 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="chamada"
+            element={
+              <ProtectedRoute>
+                <NovaChamada />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="chamadas"
+            element={
+              <ProtectedRoute>
+                <ChamadasTabela />
+              </ProtectedRoute>
+            }
+          />
         </Route>
-      </>
-    )
+      </>,
+    ),
   );
 
   return (

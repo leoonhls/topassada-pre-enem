@@ -13,12 +13,15 @@ import { toast } from "sonner";
 import EditFullSchedule from "./EditFullSchedule";
 import { fetchSchedulesByDay } from "./fetchSchedulesByDay";
 import { horarios } from "./horarios";
+import { isAdm } from "@/utils/utils";
 
 function ScheduleManager() {
   const [schedulesByDay, setSchedulesByDay] = useState<Day[]>();
   const [loading, setLoading] = useState(true);
 
   const days = ["segunda", "terça", "quarta", "quinta", "sexta"];
+
+  const isAdmin = isAdm();
 
   useEffect(() => {
     const fetch = async () => {
@@ -44,11 +47,16 @@ function ScheduleManager() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
               Quadro de Horários
             </h1>
-            {schedulesByDay && (
-              <EditFullSchedule
-                days={schedulesByDay}
-                onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
-              />
+            {schedulesByDay && isAdmin && (
+              <div>
+                <EditFullSchedule
+                  days={schedulesByDay}
+                  onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
+                />
+                <a href="/chamada">
+                  <button>"Nova Chamada"</button>
+                </a>
+              </div>
             )}
           </div>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
