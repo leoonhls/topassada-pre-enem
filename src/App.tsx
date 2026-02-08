@@ -32,7 +32,15 @@ function App() {
             }
           />
           <Route
-            path="gestao"
+            path="equipe"
+            element={
+              <ProtectedRoute>
+                <Management />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="alunos"
             element={
               <ProtectedRoute>
                 <Management />
