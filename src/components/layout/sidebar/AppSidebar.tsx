@@ -49,6 +49,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: isActiveRoute("chamadas"),
       },
       {
+        title: "Fazer Chamada",
+        url: "chamada",
+        isActive: isActiveRoute("chamada"),
+      },
+      {
         title: "Equipe",
         url: "equipe",
         isActive: isActiveRoute("equipe"),

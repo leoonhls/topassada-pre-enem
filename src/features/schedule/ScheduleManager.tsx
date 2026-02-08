@@ -44,22 +44,15 @@ function ScheduleManager() {
     <div className="flex flex-col px-3 md:px-5">
       <div className="flex flex-col gap-4 pt-4 px-2 md:px-4">
         <div>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-start sm:items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
+          <div className="flex gap-3 sm:gap-5 items-start sm:items-center">
+            <h1 className="flex  text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
               Quadro de Horários
             </h1>
             {schedulesByDay && isAdmin && (
-              <div className="flex gap-2 flex-wrap">
-                <EditFullSchedule
-                  days={schedulesByDay}
-                  onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
-                />
-                <a href="/chamada">
-                  <Button size={"sm"} variant={"outline"}>
-                    Nova Chamada
-                  </Button>
-                </a>
-              </div>
+              <EditFullSchedule
+                days={schedulesByDay}
+                onSave={(updatedDays) => setSchedulesByDay(updatedDays)}
+              />
             )}
           </div>
           <p className="text-muted-foreground mt-1">
