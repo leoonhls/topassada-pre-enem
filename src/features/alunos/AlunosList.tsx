@@ -82,9 +82,7 @@ export const AlunosList: React.FC = () => {
         <Table className="min-w-[640px] text-xs sm:text-sm">
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-white">
-                Nome
-              </TableHead>
+              <TableHead className="sticky left-0 z-10 bg-card">Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
@@ -96,7 +94,7 @@ export const AlunosList: React.FC = () => {
           <TableBody>
             {alunos.map((aluno) => (
               <TableRow key={aluno.id}>
-                <TableCell className="sticky left-0 z-10 bg-white">
+                <TableCell className="sticky items-start left-0 z-10 bg-card">
                   {getPreferredName(aluno.nome, aluno.nome_social)}
                 </TableCell>
                 <TableCell>{aluno.cpf}</TableCell>

@@ -16,6 +16,8 @@ import {
   Timestamp,
   query,
   where,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
@@ -29,6 +31,7 @@ interface Aluno {
 }
 
 interface ChamadaAluno {
+  id: string;
   nome: string;
   presenca: boolean;
   justificativa?: string;
@@ -77,48 +80,36 @@ const NovaChamada: React.FC = () => {
     const checkChamadaDia = async () => {
       setLoading(true);
       const chamadasRef = collection(db, "chamadas");
-      const querySnapshot = await getDocs(chamadasRef);
-      let encontrada = null;
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.dia === dia) {
-          encontrada = { id: doc.id, ...data };
-        }
+      const chamadasQuery = query(chamadasRef, where("dia", "==", dia));
+      const querySnapshot = await getDocs(chamadasQuery);
+      let encontrada: ChamadaDocument | null = null;
+      querySnapshot.forEach((snap) => {
+        const data = snap.data() as Omit<ChamadaDocument, "id">;
+        encontrada = { id: snap.id, ...data };
       });
       setChamadaExistente(encontrada);
       setEditavel(!encontrada);
       if (encontrada) {
         // Monta alunos e chamada a partir da chamada existente
+        const encontradaDoc = encontrada as ChamadaDocument;
         setAlunos(
-          (encontrada as ChamadaDocument).lista.map(
-            (item: any, idx: number) => ({
-              id: String(idx),
-              nome: item.nome,
-            }),
-          ),
+          encontradaDoc.lista.map((item: ChamadaAluno) => ({
+            id: item.id,
+            nome: item.nome,
+          })),
         );
         const chamadaObj: Record<string, ChamadaAluno> = {};
-        (encontrada as ChamadaDocument).lista.forEach(
-          (item: any, idx: number) => {
-            chamadaObj[String(idx)] = {
-              nome: item.nome,
-              presenca: item.presenca,
-              justificativa: item.justificativa,
-            };
-          },
-        );
+        encontradaDoc.lista.forEach((item: ChamadaAluno) => {
+          chamadaObj[item.id] = {
+            id: item.id,
+            nome: item.nome,
+            presenca: item.presenca,
+            justificativa: item.justificativa,
+          };
+        });
         setChamada(chamadaObj);
       } else {
-        // Carrega lista de alunos normal
-        const alunosRef = collection(db, "alunos");
-        const alunosQuery = query(alunosRef, where("active", "==", true));
-        const querySnapshot = await getDocs(alunosQuery);
-        const alunosList: Aluno[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data() as Omit<Aluno, "id">;
-          alunosList.push({ id: doc.id, ...data });
-        });
-        setAlunos(alunosList);
+        // Sem chamada: reaproveita lista de alunos já carregada
         setChamada({});
       }
       setLoading(false);
@@ -173,13 +164,24 @@ const NovaChamada: React.FC = () => {
       }
       return item;
     });
-    await addDoc(collection(db, "chamadas"), {
-      timestamp: Timestamp.now(),
-      dia,
-      quemFez: currentUser?.email || "desconhecido",
-      lista: chamadaList,
-    });
-    alert("Chamada registrada com sucesso!");
+    if (chamadaExistente) {
+      // Atualiza chamada existente para o dia
+      await updateDoc(doc(db, "chamadas", chamadaExistente.id), {
+        timestamp: Timestamp.now(),
+        quemFez: currentUser?.email || "desconhecido",
+        lista: chamadaList,
+      });
+      alert("Chamada atualizada com sucesso!");
+    } else {
+      // Cria nova chamada para o dia
+      await addDoc(collection(db, "chamadas"), {
+        timestamp: Timestamp.now(),
+        dia,
+        quemFez: currentUser?.email || "desconhecido",
+        lista: chamadaList,
+      });
+      alert("Chamada registrada com sucesso!");
+    }
     setChamada({});
   };
 
@@ -199,7 +201,7 @@ const NovaChamada: React.FC = () => {
       </div>
       {chamadaExistente && (
         <div className="mb-4 flex items-center gap-4">
-          <span className="text-red-600 font-semibold">
+          <span className="text-destructive font-semibold">
             Já existe chamada para o dia selecionado.
           </span>
           <div className="flex items-center gap-2">
@@ -220,7 +222,7 @@ const NovaChamada: React.FC = () => {
             <Table className="min-w-[480px] text-sm">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="border px-2 py-1 sticky left-0 bg-white z-10">
+                  <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
                     Nome
                   </TableHead>
                   <TableHead className="border px-2 py-1">Presença</TableHead>
@@ -232,19 +234,19 @@ const NovaChamada: React.FC = () => {
               <TableBody>
                 {alunos.map((aluno) => (
                   <TableRow key={aluno.id}>
-                    <TableCell className="border px-2 py-1 sticky left-0 bg-white z-10">
+                    <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
                       {getPreferredName(aluno.nome, (aluno as any).nome_social)}
                     </TableCell>
                     <TableCell className="border px-2 py-1 text-center">
                       <button
                         type="button"
-                        className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-green-500 text-white" : "bg-gray-200"}`}
+                        className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-success text-foreground" : "bg-muted"}`}
                         onClick={() => handlePresenca(aluno.id, true)}>
                         ✓
                       </button>
                       <button
                         type="button"
-                        className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-red-500 text-white" : "bg-gray-200"}`}
+                        className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
                         onClick={() => handlePresenca(aluno.id, false)}>
                         X
                       </button>
@@ -252,7 +254,7 @@ const NovaChamada: React.FC = () => {
                     <TableCell className="border px-2 py-1">
                       <button
                         type="button"
-                        className="px-2 py-1 rounded bg-gray-200 text-gray-700"
+                        className="px-2 py-1 rounded bg-muted text-foreground"
                         disabled={chamada[aluno.id]?.presenca !== false}
                         onClick={() => setOpenDialogId(aluno.id)}>
                         Justificar
@@ -280,7 +282,7 @@ const NovaChamada: React.FC = () => {
                             />
                             <button
                               type="button"
-                              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
                               onClick={() => setOpenDialogId(null)}>
                               Salvar
                             </button>
@@ -295,7 +297,7 @@ const NovaChamada: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
             disabled={!editavel}>
             Salvar Chamada
           </button>

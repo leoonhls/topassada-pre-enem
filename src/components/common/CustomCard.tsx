@@ -44,7 +44,7 @@ export function CustomCard({
             <span className="text-muted-foreground italic text-xs truncate">
               {field.label}
             </span>
-            <span className="text-white truncate">{field.value}</span>
+            <span className="text-foreground truncate">{field.value}</span>
           </div>
         ))}
       </CardContent>

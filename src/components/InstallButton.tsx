@@ -68,7 +68,7 @@ export default function InstallButton() {
     <div>
       <button
         onClick={handleInstall}
-        className="w-full px-3 py-2 text-sm rounded bg-purple-600 text-white hover:opacity-95">
+        className="w-full px-3 py-2 text-sm rounded bg-primary text-primary-foreground hover:opacity-95">
         Instalar APP
       </button>
 

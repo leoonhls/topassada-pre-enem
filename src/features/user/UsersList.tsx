@@ -88,9 +88,7 @@ export const UsersList = memo(() => {
         <Table className="min-w-[640px] text-xs sm:text-sm">
           <TableHeader className="italic">
             <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-white">
-                Nome
-              </TableHead>
+              <TableHead className="sticky left-0 z-10 bg-card">Nome</TableHead>
               <TableHead>CPF</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
@@ -102,7 +100,7 @@ export const UsersList = memo(() => {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium sticky left-0 z-10 bg-white">
+                <TableCell className="font-medium sticky left-0 z-10 bg-card">
                   {getPreferredName(user.name, (user as any).nome_social)}
                 </TableCell>
                 <TableCell>{user.cpf}</TableCell>
@@ -126,7 +124,9 @@ export const UsersList = memo(() => {
 
       {/* Indicador de Carregamento */}
       {loading && (
-        <div className="mt-4 text-center text-gray-400">Carregando...</div>
+        <div className="mt-4 text-center text-muted-foreground">
+          Carregando...
+        </div>
       )}
 
       <Dialog

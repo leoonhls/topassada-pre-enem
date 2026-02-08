@@ -14,7 +14,7 @@ function Header() {
   const { user } = useAuth();
 
   return (
-    <nav className="border-b w-full items-center bg-blue-600 text-white shadow p-4">
+    <nav className="border-b w-full items-center bg-primary text-primary-foreground shadow p-4">
       <div className="flex items-center justify-between">
         <div className="flex gap-2 items-center">
           {user && <SidebarTrigger className="md:hidden " />}
@@ -23,7 +23,7 @@ function Header() {
         {!user && (
           <Link
             to="/login"
-            className="text-sm underline underline-offset-4 hover:text-gray-200">
+            className="text-sm underline underline-offset-4 hover:text-muted-foreground">
             Login
           </Link>
         )}

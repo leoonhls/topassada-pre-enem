@@ -108,7 +108,7 @@ export function CustomAccordion({
         className={cn(
           "transition-all duration-200 hover:shadow-md cursor-default",
           "hover:scale-[1.01] hover:border-primary/20",
-          className
+          className,
         )}>
         <CardHeader
           className="flex items-center justify-between p-4"
@@ -116,7 +116,7 @@ export function CustomAccordion({
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-2">
-                <div className="flex gap-2 font-medium text-white">
+                <div className="flex gap-2 font-medium text-foreground">
                   {<Badge variant="default">{title}</Badge>}
                   {<Badge variant="outline">{productName}</Badge>}
                 </div>
@@ -139,15 +139,15 @@ export function CustomAccordion({
           </div>
           <div className="ml-4">
             {isExpanded() ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+              <ChevronUpIcon className="h-5 w-5 text-muted-foreground" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+              <ChevronDownIcon className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
         </CardHeader>
         {isExpanded() && (
           <CardContent className="pt-0">
-            <div className="flex flex-col gap-4 p-4 border-t border-gray-700">
+            <div className="flex flex-col gap-4 p-4 border-t border-border">
               {fields.length > 0 && (
                 <div className="flex flex-wrap gap-x-20 gap-y-5 justify-between">
                   {fields.map((field, idx) => (
@@ -163,7 +163,7 @@ export function CustomAccordion({
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between flex-1/2">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <MapPin className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium ">
                       {productOrigin}
                     </span>
@@ -171,7 +171,7 @@ export function CustomAccordion({
                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center gap-2 flex-1/2 justify-end">
-                  <MapPin className="w-4 h-4 text-green-600" />
+                  <MapPin className="w-4 h-4 text-success" />
                   <span className="text-sm font-medium">
                     {productDestination}
                   </span>
@@ -211,8 +211,8 @@ export function CustomAccordion({
             key={item.id}
             className={`border rounded-lg overflow-hidden transition-all duration-300  ${
               item.isSelected
-                ? "border-blue-500 bg-blue-900 bg-opacity-20"
-                : "border-gray-700 bg-gray-800"
+                ? "border-primary bg-primary/10"
+                : "border-border bg-card"
             }`}>
             <div
               className="flex items-center justify-between p-4 cursor-pointer"
@@ -220,11 +220,11 @@ export function CustomAccordion({
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-white">
+                    <h3 className="font-medium text-foreground">
                       {item.header.title}
                     </h3>
                     {item.header.subtitle && (
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         {item.header.subtitle}
                       </p>
                     )}
@@ -234,14 +234,14 @@ export function CustomAccordion({
               </div>
               <div className="ml-4 transition-all duration-300 ">
                 {itemIsExpanded ? (
-                  <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+                  <ChevronUpIcon className="h-5 w-5 text-muted-foreground" />
                 ) : (
-                  <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                  <ChevronDownIcon className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
             </div>
             <div
-              className={`transition-all duration-200 overflow-hidden  border-t border-gray-700 bg-gray-900 ${
+              className={`transition-all duration-200 overflow-hidden  border-t border-border bg-card ${
                 itemIsExpanded
                   ? "max-h-[1000px] opacity-100 p-4"
                   : "max-h-0 opacity-0 p-0 border-t-0 px-50"

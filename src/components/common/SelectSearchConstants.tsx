@@ -24,7 +24,7 @@ export function SelectSearchConstants({
 }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [value, setValue] = useState<SingleValue<Option> | MultiValue<Option>>(
-    null
+    null,
   );
 
   const handleInputChange = (newValue: string) => {
@@ -57,7 +57,7 @@ export function SelectSearchConstants({
           ? "Digite pelo menos 2 caracteres..."
           : "Nenhum resultado encontrado"
       }
-      className="text-sm rounded-lg w-full bg-gray-800 border-gray-600 text-white"
+      className="text-sm rounded-lg w-full bg-card border-border text-foreground"
       classNamePrefix="select"
       menuPortalTarget={
         typeof window !== "undefined" ? document.body : undefined

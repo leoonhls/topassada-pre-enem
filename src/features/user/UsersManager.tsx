@@ -7,7 +7,7 @@ const UsersManager: React.FC = () => {
   return (
     <div className="p-3">
       <div className="flex p-5  gap-3 items-center">
-        <h2 className="text-2xl font-bold text-gray-800 items-center">
+        <h2 className="text-2xl font-bold text-foreground items-center">
           Gestão de Usuários
         </h2>
         <NewUser />

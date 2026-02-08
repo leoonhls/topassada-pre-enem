@@ -39,11 +39,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userDoc = await getDoc(doc(db, "users", uid));
     if (userDoc.exists()) {
       const data = userDoc.data() as {
-        adm: boolean;
+        adm?: boolean;
         name: string;
         email: string;
         active?: boolean;
         pfpPath?: string;
+        nivel?: "professor" | "supervisor" | "adm";
       };
       if (data.active === false) {
         // Usuário desativado no Firestore
@@ -59,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       setUserData({
-        adm: data.adm,
+        adm: data.adm ?? data.nivel === "adm",
         name: capitalizeWords(data.name),
         email: data.email,
         pfpUrl,

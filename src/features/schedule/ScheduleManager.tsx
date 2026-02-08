@@ -62,7 +62,7 @@ function ScheduleManager() {
               </div>
             )}
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Visualize todas as aulas da semana
           </p>
         </div>
@@ -103,7 +103,7 @@ function ScheduleManager() {
                     </Item>
                   ))
                 ) : (
-                  <span className="text-gray-400">Nenhum horário</span>
+                  <span className="text-muted-foreground">Nenhum horário</span>
                 )}
               </div>
             </div>
@@ -111,7 +111,9 @@ function ScheduleManager() {
         })}
       </div>
       {loading && (
-        <div className="mt-4 text-center text-gray-400">Carregando...</div>
+        <div className="mt-4 text-center text-muted-foreground">
+          Carregando...
+        </div>
       )}
     </div>
   );

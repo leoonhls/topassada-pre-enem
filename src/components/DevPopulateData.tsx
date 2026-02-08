@@ -131,7 +131,7 @@ export const DevPopulateData: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4 bg-yellow-100 border rounded">
+    <div className="p-4 bg-muted border rounded">
       {loading && <span>Populando dados...</span>}
       {done && <span>Dados populados!</span>}
     </div>

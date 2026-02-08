@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { DevPopulateData } from "@/components/DevPopulateData";
@@ -26,7 +26,7 @@ import {
   DialogClose,
 } from "../components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { getPreferredName } from "@/utils/stringUtils";
+import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
 
 interface Aluno {
   id: string;
@@ -59,10 +59,15 @@ const ChamadasTabela: React.FC = () => {
   const [dias, setDias] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const hoje = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const mesAtual = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}`;
+  const [selectedMonth, setSelectedMonth] = useState<string>(mesAtual);
+
+  // Busca alunos uma vez
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAlunos = async () => {
       setLoading(true);
-      // Busca alunos
       const alunosSnapshot = await getDocs(collection(db, "alunos"));
       const alunosList: Aluno[] = [];
       alunosSnapshot.forEach((doc) => {
@@ -70,60 +75,104 @@ const ChamadasTabela: React.FC = () => {
       });
       alunosList.sort((a, b) => a.nome.localeCompare(b.nome));
       setAlunos(alunosList);
-      // Busca chamadas dos últimos 30 dias
-      const chamadasSnapshot = await getDocs(collection(db, "chamadas"));
-      const hoje = new Date();
+      setLoading(false);
+    };
+    fetchAlunos();
+  }, []);
+
+  // Busca chamadas apenas do mês selecionado
+  useEffect(() => {
+    const fetchChamadas = async () => {
+      setLoading(true);
+      const [yearStr, monthStr] = selectedMonth.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr); // 1-12
+      if (!year || !month) {
+        setChamadas([]);
+        setDias([]);
+        setLoading(false);
+        return;
+      }
+
+      const firstDay = `${yearStr}-${monthStr}-01`;
+      const monthIndex = month - 1; // 0-11
+      const lastDate = new Date(year, monthIndex + 1, 0).getDate();
+      const lastDay = `${yearStr}-${monthStr}-${pad(lastDate)}`;
+
+      const chamadasRef = collection(db, "chamadas");
+      const chamadasQuery = query(
+        chamadasRef,
+        where("dia", ">=", firstDay),
+        where("dia", "<=", lastDay),
+      );
+      const chamadasSnapshot = await getDocs(chamadasQuery);
       const diasSet = new Set<string>();
       const chamadasList: ChamadaDocument[] = [];
-      chamadasSnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Considera só os últimos 30 dias
-        const dia = data.dia;
-        const dataChamada = new Date(dia);
-        const diff =
-          (hoje.getTime() - dataChamada.getTime()) / (1000 * 60 * 60 * 24);
-        if (diff <= 30 && diff >= 0) {
-          chamadasList.push({ id: doc.id, dia, lista: data.lista });
-          diasSet.add(dia);
-        }
+      chamadasSnapshot.forEach((snap) => {
+        const data = snap.data();
+        const dia = data.dia as string;
+        if (typeof dia !== "string") return;
+        // Garante que o dia realmente pertença ao mês selecionado (evita 31/01 em fevereiro, por exemplo)
+        if (!dia.startsWith(`${yearStr}-${monthStr}-`)) return;
+        chamadasList.push({ id: snap.id, dia, lista: data.lista });
+        diasSet.add(dia);
       });
-      // Ordena dias
       const diasArray = Array.from(diasSet).sort();
       setChamadas(chamadasList);
       setDias(diasArray);
       setLoading(false);
     };
-    fetchData();
-  }, []);
+    fetchChamadas();
+  }, [selectedMonth]);
 
   if (loading) return <div>Carregando...</div>;
 
+  let tituloMes = "";
+  try {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr); // 1-12
+    const d = new Date(year, month - 1, 1);
+    tituloMes = d.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    tituloMes = selectedMonth;
+  }
+
   // Monta tabela: linhas = alunos, colunas = dias
   return (
-    <div className="overflow-x-auto bg-pink-50 rounded-xl shadow-lg p-4 md:p-6">
-      <h1 className="text-2xl md:text-3xl font-extrabold mb-4 md:mb-6 text-pink-600">
-        Chamadas dos últimos 30 dias 🐻
-      </h1>
-      <Table className="rounded-xl overflow-hidden border border-pink-200 text-center min-w-[640px] text-xs sm:text-sm">
+    <div className="bg-card rounded-xl shadow-lg p-4 md:p-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
+        <div className="flex items-center gap-2 text-sm">
+          <input
+            type="month"
+            value={capitalizeFirstLetter(selectedMonth)}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="border border-border rounded px-2 py-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+      <Table className="rounded-xl border border-border text-center text-xs sm:text-sm">
         <TableHeader>
-          <TableRow className="bg-pink-100">
-            <TableHead className="text-pink-700 text-lg text-center sticky left-0 z-20 bg-pink-100">
-              Aluno
-            </TableHead>
+          <TableRow className="bg-muted">
+            <TableHead className="text-foreground text-lg text-center sticky left-0 z-20 bg-muted"></TableHead>
             {dias.map((dia) => {
-              let formatted = "";
+              let formatted = dia;
               try {
-                const d = new Date(dia);
-                formatted = d.toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "2-digit",
-                });
+                const [yearStr, monthStr, dayStr] = dia.split("-");
+                if (yearStr && monthStr && dayStr) {
+                  const day = dayStr.padStart(2, "0");
+                  const month = monthStr.padStart(2, "0");
+                  const year = yearStr.slice(-2);
+                  formatted = `${day}/${month}/${year}`;
+                }
               } catch {
                 formatted = dia;
               }
               return (
-                <TableHead key={dia} className="text-pink-700 text-center">
+                <TableHead key={dia} className="text-foreground text-center">
                   {formatted}
                 </TableHead>
               );
@@ -132,17 +181,15 @@ const ChamadasTabela: React.FC = () => {
         </TableHeader>
         <TableBody>
           {alunos.map((aluno) => (
-            <TableRow
-              key={aluno.id}
-              className="hover:bg-pink-100 transition-all">
-              <TableCell className="font-semibold text-pink-600 bg-pink-50 text-center sticky left-0 z-10">
+            <TableRow key={aluno.id} className="hover:bg-muted transition-all">
+              <TableCell className="font-semibold text-primary bg-card text-left sticky left-0 z-10">
                 {getPreferredName(aluno.nome, (aluno as any).nome_social)}
               </TableCell>
               {dias.map((dia) => {
                 const chamadaDia = chamadas.find((c) => c.dia === dia);
                 if (!chamadaDia)
                   return (
-                    <TableCell className="bg-white text-gray-400 text-center">
+                    <TableCell className="bg-card text-muted-foreground text-center">
                       -
                     </TableCell>
                   );
@@ -151,15 +198,15 @@ const ChamadasTabela: React.FC = () => {
                 );
                 if (!alunoChamada)
                   return (
-                    <TableCell className="bg-white text-gray-400 text-center">
+                    <TableCell className="bg-card text-muted-foreground text-center">
                       -
                     </TableCell>
                   );
                 return (
-                  <TableCell className="text-center text-lg bg-white">
+                  <TableCell className="text-center text-lg bg-card">
                     {alunoChamada.presenca ? (
                       <span className="flex justify-center items-center h-full">
-                        <CheckCircle2Icon className="text-green-500 w-6 h-6" />
+                        <CheckCircle2Icon className="text-success w-6 h-6" />
                       </span>
                     ) : (
                       <>
@@ -169,20 +216,20 @@ const ChamadasTabela: React.FC = () => {
                               <Button
                                 size={"icon"}
                                 variant={"link"}
-                                className="rounded-full w-6 h-6 border-2 border-yellow-400 bg-transparent text-yellow-400"
+                                className="rounded-full w-6 h-6 border-2 border-warning bg-transparent text-warning"
                                 onClick={() => {
                                   setJustificativaEdit(
                                     alunoChamada.justificativa || "",
                                   );
                                   setJustificativaEnabled(false);
                                 }}>
-                                <MinusIcon className="text-yellow-400 w-6 h-6" />
+                                <MinusIcon className="text-warning w-6 h-6" />
                               </Button>
                             ) : (
                               <Button
                                 size={"icon"}
                                 variant={"link"}
-                                className="rounded-full w-6 h-6 border-2 border-red-500 bg-transparent text-red-500"
+                                className="rounded-full w-6 h-6 border-2 border-destructive bg-transparent text-destructive"
                                 onClick={() => {
                                   setJustificativaEdit("");
                                   setJustificativaEnabled(false);
@@ -191,14 +238,14 @@ const ChamadasTabela: React.FC = () => {
                               </Button>
                             )}
                           </DialogTrigger>
-                          <DialogContent className="bg-white rounded-xl p-6 shadow-lg w-full max-w-xs">
+                          <DialogContent className="bg-card rounded-xl p-6 shadow-lg w-full max-w-xs">
                             <DialogHeader>
-                              <DialogTitle className="text-pink-600">
+                              <DialogTitle className="text-primary">
                                 Justificativa
                               </DialogTitle>
                               <DialogDescription>
                                 <div className="flex items-center gap-2 mb-2">
-                                  <label className="text-pink-700 font-semibold">
+                                  <label className="text-foreground font-semibold">
                                     Editar justificativa?
                                   </label>
                                   <Switch
@@ -226,7 +273,7 @@ const ChamadasTabela: React.FC = () => {
                             <DialogFooter>
                               {justificativaEnabled && (
                                 <Button
-                                  className="bg-pink-600 text-white font-bold"
+                                  className="bg-primary text-primary-foreground font-bold"
                                   onClick={async () => {
                                     // Atualiza justificativa no Firebase
                                     const chamadaDia = chamadas.find(
@@ -261,7 +308,7 @@ const ChamadasTabela: React.FC = () => {
                                 </Button>
                               )}
                               <DialogClose asChild>
-                                <Button className="bg-pink-200 text-pink-700 font-bold">
+                                <Button className="bg-secondary text-secondary-foreground font-bold">
                                   Fechar
                                 </Button>
                               </DialogClose>
