@@ -9,7 +9,14 @@ import {
   TableCell,
 } from "../components/ui/table";
 import { Switch } from "../components/ui/switch";
-import { collection, getDocs, addDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  Timestamp,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
 import { getPreferredName } from "@/utils/stringUtils";
@@ -18,6 +25,7 @@ interface Aluno {
   id: string;
   nome: string;
   nome_social?: string;
+  active?: boolean;
 }
 
 interface ChamadaAluno {
@@ -51,10 +59,13 @@ const NovaChamada: React.FC = () => {
   useEffect(() => {
     const fetchAlunos = async () => {
       setLoading(true);
-      const querySnapshot = await getDocs(collection(db, "alunos"));
+      const alunosRef = collection(db, "alunos");
+      const alunosQuery = query(alunosRef, where("active", "==", true));
+      const querySnapshot = await getDocs(alunosQuery);
       const alunosList: Aluno[] = [];
       querySnapshot.forEach((doc) => {
-        alunosList.push({ id: doc.id, ...doc.data() } as Aluno);
+        const data = doc.data() as Omit<Aluno, "id">;
+        alunosList.push({ id: doc.id, ...data });
       });
       setAlunos(alunosList);
       setLoading(false);
@@ -99,10 +110,13 @@ const NovaChamada: React.FC = () => {
         setChamada(chamadaObj);
       } else {
         // Carrega lista de alunos normal
-        const querySnapshot = await getDocs(collection(db, "alunos"));
+        const alunosRef = collection(db, "alunos");
+        const alunosQuery = query(alunosRef, where("active", "==", true));
+        const querySnapshot = await getDocs(alunosQuery);
         const alunosList: Aluno[] = [];
         querySnapshot.forEach((doc) => {
-          alunosList.push({ id: doc.id, ...doc.data() } as Aluno);
+          const data = doc.data() as Omit<Aluno, "id">;
+          alunosList.push({ id: doc.id, ...data });
         });
         setAlunos(alunosList);
         setChamada({});
