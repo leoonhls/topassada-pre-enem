@@ -1,6 +1,7 @@
 import {
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
   Route,
   RouterProvider,
 } from "react-router-dom";
@@ -24,14 +25,7 @@ function App() {
       <>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RootLayout />}>
-          <Route
-            index
-            element={
-              <ProtectedRoute>
-                <ScheduleManager />
-              </ProtectedRoute>
-            }
-          />
+          <Route index element={<ScheduleManager />} />
           <Route
             path="equipe"
             element={
@@ -65,6 +59,7 @@ function App() {
             }
           />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </>,
     ),
   );

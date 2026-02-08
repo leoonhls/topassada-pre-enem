@@ -8,12 +8,12 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
 
-    if (loading) {
-    return <></>; }
-
+  if (loading) {
+    return <></>;
+  }
 
   if (!user) {
-    return <Navigate to="/login" replace />; 
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
