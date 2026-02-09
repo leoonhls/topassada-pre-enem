@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/common/LoadingState";
 import {
   Table,
   TableHeader,
@@ -74,7 +75,7 @@ export const AlunosList: React.FC = () => {
     setEditForm(null);
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <LoadingState label="Carregando alunos..." fullscreen />;
 
   return (
     <>
@@ -87,7 +88,6 @@ export const AlunosList: React.FC = () => {
               <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Ativo</TableHead>
-              {/* <TableHead>Foto</TableHead> */}
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>

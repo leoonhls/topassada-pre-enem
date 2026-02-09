@@ -26,6 +26,7 @@ import { useUsers } from "@/features/user/useUsers";
 import { horarios } from "@/features/schedule/horarios";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/common/LoadingState";
 
 interface Aluno {
   id: string;
@@ -61,7 +62,7 @@ interface ChamadaProfessor {
   id: string;
   materia: string;
   professorTitular: string;
-  presenca: boolean;
+  presenca?: boolean;
   substituto?: string;
   justificativa?: string;
 }
@@ -304,6 +305,16 @@ const NovaChamada: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (tipoChamada === "alunos") {
+      const todosRespondidos = alunos.every(
+        (aluno) => typeof chamada[aluno.id]?.presenca === "boolean",
+      );
+      if (!todosRespondidos) {
+        alert(
+          "Preencha presença ou falta para todos os alunos antes de salvar.",
+        );
+        return;
+      }
+
       const chamadaList = alunos.map((aluno) => {
         const presencaFlag = chamada[aluno.id]?.presenca;
         const presenca = presencaFlag ?? false;
@@ -347,13 +358,12 @@ const NovaChamada: React.FC = () => {
         alert("Chamada de alunos registrada com sucesso!");
       }
       setChamada({});
-    } else {
+    } else if (tipoChamada === "professores") {
       const chamadaListProf = professoresDia.map((prof) => {
         const presencaFlag = chamadaProf[prof.id]?.presenca;
-        const presenca = presencaFlag ?? false;
         const substituto = chamadaProf[prof.id]?.substituto;
         const justificativa =
-          presenca === false && chamadaProf[prof.id]?.justificativa
+          presencaFlag === false && chamadaProf[prof.id]?.justificativa
             ? chamadaProf[prof.id]?.justificativa
             : undefined;
 
@@ -361,8 +371,10 @@ const NovaChamada: React.FC = () => {
           id: prof.id,
           materia: prof.materia,
           professorTitular: prof.professorTitular,
-          presenca,
         };
+        if (typeof presencaFlag === "boolean") {
+          item.presenca = presencaFlag;
+        }
         if (substituto) {
           item.substituto = substituto;
         }
@@ -420,11 +432,12 @@ const NovaChamada: React.FC = () => {
     tituloData = dia;
   }
 
-  if (loading) return <div>Carregando dados da chamada...</div>;
+  if (loading)
+    return <LoadingState label="Carregando dados da chamada..." fullscreen />;
 
   return (
     <div className="bg-card rounded-xl shadow-lg p-4 md:p-6">
-      <div className="flex flex-col max-w-xl items-start justify-between gap-3 md:gap-4 mb-4 md:mb-6">
+      <div className="flex flex-col max-w-xl justify-between gap-3 md:gap-4 mb-4 md:mb-6">
         <div className="flex gap-4 items-end">
           <div className="flex flex-col">
             <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -840,12 +853,14 @@ const NovaChamada: React.FC = () => {
                 )}
               </>
             )}
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-              disabled={!editavel}>
-              Salvar Chamada
-            </button>
+            {tipoChamada && (
+              <button
+                type="submit"
+                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!editavel}>
+                Salvar Chamada
+              </button>
+            )}
           </fieldset>
         </form>
       </div>

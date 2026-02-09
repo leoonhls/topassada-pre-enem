@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/common/LoadingState";
 import { Label } from "@/components/ui/label";
 import { db } from "@/firebase/config";
 import { doc, updateDoc } from "firebase/firestore";
@@ -123,11 +124,7 @@ export const UsersList = memo(() => {
       </div>
 
       {/* Indicador de Carregamento */}
-      {loading && (
-        <div className="mt-4 text-center text-muted-foreground">
-          Carregando...
-        </div>
-      )}
+      {loading && <LoadingState label="Carregando usuários..." />}
 
       <Dialog
         open={!!editUser}

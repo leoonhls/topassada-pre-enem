@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import EditFullSchedule from "./EditFullSchedule";
 import { fetchSchedulesByDay } from "./fetchSchedulesByDay";
 import { horarios } from "./horarios";
+import { LoadingState } from "@/components/common/LoadingState";
 import { isAdm } from "@/utils/utils";
 import { Button } from "@/components/ui/button";
 
@@ -103,11 +104,7 @@ function ScheduleManager() {
           );
         })}
       </div>
-      {loading && (
-        <div className="mt-4 text-center text-muted-foreground">
-          Carregando...
-        </div>
-      )}
+      {loading && <LoadingState label="Carregando horários..." />}
     </div>
   );
 }

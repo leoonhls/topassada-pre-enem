@@ -11,7 +11,7 @@ import {
   TableRow,
   TableCell,
 } from "../components/ui/table";
-import { CheckCircle2Icon, X } from "lucide-react";
+import { CheckCircle2Icon, X, HelpCircle } from "lucide-react";
 import { MinusIcon } from "lucide-react";
 import { MdReportProblem } from "react-icons/md";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,9 @@ import {
   DialogClose,
 } from "../components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { LoadingState } from "@/components/common/LoadingState";
 import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
+import { horarios } from "@/features/schedule/horarios";
 
 interface Aluno {
   id: string;
@@ -53,7 +55,7 @@ interface ChamadaProfessor {
   id: string;
   materia: string;
   professorTitular: string;
-  presenca: boolean;
+  presenca?: boolean;
   substituto?: string;
   justificativa?: string;
 }
@@ -231,7 +233,8 @@ const ChamadasTabela: React.FC = () => {
     fetchChamadasProfessores();
   }, [selectedMonth, tipoTabela]);
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading)
+    return <LoadingState label="Carregando chamadas..." fullscreen />;
 
   let tituloMes = "";
   try {
@@ -518,7 +521,14 @@ const ChamadasTabela: React.FC = () => {
                 <TableCell className="font-semibold text-primary bg-card text-left sticky left-0 z-10">
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">
-                      Aula {prof.id}
+                      {(() => {
+                        const idx = Number(prof.id);
+                        const horario =
+                          !isNaN(idx) && horarios[idx] ? horarios[idx] : null;
+                        return horario
+                          ? `${horario[0]} - ${horario[1]}`
+                          : `Aula ${Number.isNaN(idx) ? prof.id : idx + 1}`;
+                      })()}
                     </span>
                     <span>{prof.materia}</span>
                     <span className="text-xs">{prof.professorTitular}</span>
@@ -546,13 +556,14 @@ const ChamadasTabela: React.FC = () => {
                         -
                       </TableCell>
                     );
+                  const presenca = profChamada.presenca;
                   return (
                     <TableCell className="text-center text-lg bg-card">
-                      {profChamada.presenca ? (
+                      {presenca === true ? (
                         <span className="flex justify-center items-center h-full">
                           <CheckCircle2Icon className="text-success w-6 h-6" />
                         </span>
-                      ) : (
+                      ) : presenca === false ? (
                         <>
                           <Dialog>
                             <DialogTrigger asChild>
@@ -667,6 +678,10 @@ const ChamadasTabela: React.FC = () => {
                             </DialogContent>
                           </Dialog>
                         </>
+                      ) : (
+                        <span className="flex justify-center items-center h-full text-muted-foreground">
+                          <HelpCircle className="w-5 h-5" />
+                        </span>
                       )}
                     </TableCell>
                   );
