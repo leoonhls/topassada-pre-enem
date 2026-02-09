@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Dialog } from "../components/ui/dialog";
 import {
   Table,
   TableHeader,
@@ -18,10 +17,14 @@ import {
   where,
   updateDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
 import { getPreferredName } from "@/utils/stringUtils";
+import { useUsers } from "@/features/user/useUsers";
+import { horarios } from "@/features/schedule/horarios";
+import { useIsMobile } from "@/hooks/useMobile";
 
 interface Aluno {
   id: string;
@@ -45,40 +48,105 @@ interface ChamadaDocument {
   lista: ChamadaAluno[];
 }
 
+type TipoChamada = "alunos" | "professores";
+
+interface ProfessorLesson {
+  id: string;
+  materia: string;
+  professorTitular: string;
+}
+
+interface ChamadaProfessor {
+  id: string;
+  materia: string;
+  professorTitular: string;
+  presenca: boolean;
+  substituto?: string;
+  justificativa?: string;
+}
+
+interface ChamadaProfessorDocument {
+  id: string;
+  dia: string;
+  weekday: string;
+  quemFez: string;
+  timestamp: any;
+  lista: ChamadaProfessor[];
+}
+
 const NovaChamada: React.FC = () => {
+  const [tipoChamada, setTipoChamada] = useState<TipoChamada>("alunos");
   const [chamadaExistente, setChamadaExistente] =
     useState<ChamadaDocument | null>(null);
+  const [chamadaProfExistente, setChamadaProfExistente] =
+    useState<ChamadaProfessorDocument | null>(null);
   const [editavel, setEditavel] = useState(true);
-  const [openDialogId, setOpenDialogId] = useState<string | null>(null);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [chamada, setChamada] = useState<Record<string, ChamadaAluno>>({});
+  const [professoresDia, setProfessoresDia] = useState<ProfessorLesson[]>([]);
+  const [chamadaProf, setChamadaProf] = useState<
+    Record<string, ChamadaProfessor>
+  >({});
+  const [professorOptions, setProfessorOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useAuth();
+  const { fetchUserAsync } = useUsers();
   const hoje = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const dataHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
   const [dia, setDia] = useState<string>(dataHoje);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchAlunos = async () => {
-      setLoading(true);
       const alunosRef = collection(db, "alunos");
       const alunosQuery = query(alunosRef, where("active", "==", true));
       const querySnapshot = await getDocs(alunosQuery);
       const alunosList: Aluno[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as Omit<Aluno, "id">;
-        alunosList.push({ id: doc.id, ...data });
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data() as Omit<Aluno, "id">;
+        alunosList.push({ id: docSnap.id, ...data });
       });
       setAlunos(alunosList);
-      setLoading(false);
     };
-    fetchAlunos();
+
+    const fetchProfessores = async () => {
+      const res = await fetchUserAsync();
+      setProfessorOptions(
+        res.items
+          .filter((u) => (u as any).nivel === "professor")
+          .map((u) => (u as any).nome_social || u.name),
+      );
+    };
+
+    setLoading(true);
+    Promise.all([fetchAlunos(), fetchProfessores()]).finally(() =>
+      setLoading(false),
+    );
   }, []);
 
   useEffect(() => {
-    const checkChamadaDia = async () => {
-      setLoading(true);
+    const getWeekdayKey = (dateStr: string) => {
+      const [year, month, day] = dateStr.split("-").map((v) => parseInt(v, 10));
+      const d = new Date(year, month - 1, day);
+      const weekday = d.getDay(); // 0 domingo, 1 segunda, ...
+      switch (weekday) {
+        case 1:
+          return "segunda";
+        case 2:
+          return "terça";
+        case 3:
+          return "quarta";
+        case 4:
+          return "quinta";
+        case 5:
+          return "sexta";
+        default:
+          return "";
+      }
+    };
+
+    const checkChamadaAlunos = async () => {
       const chamadasRef = collection(db, "chamadas");
       const chamadasQuery = query(chamadasRef, where("dia", "==", dia));
       const querySnapshot = await getDocs(chamadasQuery);
@@ -90,7 +158,6 @@ const NovaChamada: React.FC = () => {
       setChamadaExistente(encontrada);
       setEditavel(!encontrada);
       if (encontrada) {
-        // Monta alunos e chamada a partir da chamada existente
         const encontradaDoc = encontrada as ChamadaDocument;
         setAlunos(
           encontradaDoc.lista.map((item: ChamadaAluno) => ({
@@ -109,13 +176,68 @@ const NovaChamada: React.FC = () => {
         });
         setChamada(chamadaObj);
       } else {
-        // Sem chamada: reaproveita lista de alunos já carregada
         setChamada({});
       }
-      setLoading(false);
     };
-    checkChamadaDia();
-  }, [dia]);
+
+    const checkChamadaProfessores = async () => {
+      const weekdayKey = getWeekdayKey(dia);
+      // Carrega professores do dia a partir do schedule
+      if (!weekdayKey) {
+        setProfessoresDia([]);
+      } else {
+        const docRef = doc(collection(db, "schedules"), weekdayKey);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Record<
+            string,
+            { materia: string; professor: string }
+          >;
+          const lessons = Object.keys(data)
+            .filter((key) => !isNaN(Number(key)))
+            .sort((a, b) => Number(a) - Number(b))
+            .map((key) => ({
+              id: key,
+              materia: data[key].materia,
+              professorTitular: data[key].professor,
+            }));
+          setProfessoresDia(lessons);
+        } else {
+          setProfessoresDia([]);
+        }
+      }
+
+      // Verifica se já existe chamada de professores para o dia
+      const chamadasProfRef = collection(db, "chamadasProfessores");
+      const chamadasProfQuery = query(chamadasProfRef, where("dia", "==", dia));
+      const querySnapshot = await getDocs(chamadasProfQuery);
+      let encontradaProf: ChamadaProfessorDocument | null = null;
+      querySnapshot.forEach((snap) => {
+        const data = snap.data() as Omit<ChamadaProfessorDocument, "id">;
+        encontradaProf = { id: snap.id, ...data };
+      });
+      setChamadaProfExistente(encontradaProf);
+      setEditavel(!encontradaProf);
+
+      if (encontradaProf) {
+        const docProf = encontradaProf as ChamadaProfessorDocument;
+        const chamadaObj: Record<string, ChamadaProfessor> = {};
+        docProf.lista.forEach((item: ChamadaProfessor) => {
+          chamadaObj[item.id] = { ...item };
+        });
+        setChamadaProf(chamadaObj);
+      } else {
+        setChamadaProf({});
+      }
+    };
+
+    setLoading(true);
+    if (tipoChamada === "alunos") {
+      checkChamadaAlunos().finally(() => setLoading(false));
+    } else {
+      checkChamadaProfessores().finally(() => setLoading(false));
+    }
+  }, [dia, tipoChamada]);
 
   const handlePresenca = (id: string, presenca: boolean) => {
     setChamada((prev) => ({
@@ -137,69 +259,176 @@ const NovaChamada: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const chamadaList = alunos.map((aluno) => {
-      const presenca = chamada[aluno.id]?.presenca ?? false;
-      const justificativa =
-        presenca === false && chamada[aluno.id]?.justificativa
-          ? chamada[aluno.id]?.justificativa
-          : undefined;
-      const item: {
-        id: string;
-        nome: string;
-        presenca: boolean;
-        justificativa?: string;
-      } = {
-        id: aluno.id,
-        nome: aluno.nome,
+  const handlePresencaProfessor = (id: string, presenca: boolean) => {
+    setChamadaProf((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
         presenca,
-      };
-      if (
-        justificativa !== undefined &&
-        justificativa !== null &&
-        justificativa !== ""
-      ) {
-        item.justificativa = justificativa;
-      }
-      return item;
-    });
-    if (chamadaExistente) {
-      // Atualiza chamada existente para o dia
-      await updateDoc(doc(db, "chamadas", chamadaExistente.id), {
-        timestamp: Timestamp.now(),
-        quemFez: currentUser?.email || "desconhecido",
-        lista: chamadaList,
-      });
-      alert("Chamada atualizada com sucesso!");
-    } else {
-      // Cria nova chamada para o dia
-      await addDoc(collection(db, "chamadas"), {
-        timestamp: Timestamp.now(),
-        dia,
-        quemFez: currentUser?.email || "desconhecido",
-        lista: chamadaList,
-      });
-      alert("Chamada registrada com sucesso!");
-    }
-    setChamada({});
+      },
+    }));
   };
 
-  if (loading) return <div>Carregando alunos...</div>;
+  const handleSubstitutoProfessor = (id: string, substituto: string) => {
+    setChamadaProf((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        substituto,
+      },
+    }));
+  };
+
+  const handleJustificativaProfessor = (id: string, justificativa: string) => {
+    setChamadaProf((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        justificativa,
+      },
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tipoChamada === "alunos") {
+      const chamadaList = alunos.map((aluno) => {
+        const presencaFlag = chamada[aluno.id]?.presenca;
+        const presenca = presencaFlag ?? false;
+        const justificativa =
+          presenca === false && chamada[aluno.id]?.justificativa
+            ? chamada[aluno.id]?.justificativa
+            : undefined;
+        const item: {
+          id: string;
+          nome: string;
+          presenca: boolean;
+          justificativa?: string;
+        } = {
+          id: aluno.id,
+          nome: aluno.nome,
+          presenca,
+        };
+        if (
+          justificativa !== undefined &&
+          justificativa !== null &&
+          justificativa !== ""
+        ) {
+          item.justificativa = justificativa;
+        }
+        return item;
+      });
+      if (chamadaExistente) {
+        await updateDoc(doc(db, "chamadas", chamadaExistente.id), {
+          timestamp: Timestamp.now(),
+          quemFez: currentUser?.email || "desconhecido",
+          lista: chamadaList,
+        });
+        alert("Chamada de alunos atualizada com sucesso!");
+      } else {
+        await addDoc(collection(db, "chamadas"), {
+          timestamp: Timestamp.now(),
+          dia,
+          quemFez: currentUser?.email || "desconhecido",
+          lista: chamadaList,
+        });
+        alert("Chamada de alunos registrada com sucesso!");
+      }
+      setChamada({});
+    } else {
+      const chamadaListProf = professoresDia.map((prof) => {
+        const presencaFlag = chamadaProf[prof.id]?.presenca;
+        const presenca = presencaFlag ?? false;
+        const substituto = chamadaProf[prof.id]?.substituto;
+        const justificativa =
+          presenca === false && chamadaProf[prof.id]?.justificativa
+            ? chamadaProf[prof.id]?.justificativa
+            : undefined;
+
+        const item: ChamadaProfessor = {
+          id: prof.id,
+          materia: prof.materia,
+          professorTitular: prof.professorTitular,
+          presenca,
+        };
+        if (substituto) {
+          item.substituto = substituto;
+        }
+        if (
+          justificativa !== undefined &&
+          justificativa !== null &&
+          justificativa !== ""
+        ) {
+          item.justificativa = justificativa;
+        }
+        return item;
+      });
+
+      if (chamadaProfExistente) {
+        await updateDoc(
+          doc(db, "chamadasProfessores", chamadaProfExistente.id),
+          {
+            timestamp: Timestamp.now(),
+            quemFez: currentUser?.email || "desconhecido",
+            lista: chamadaListProf,
+          },
+        );
+        alert("Chamada de professores atualizada com sucesso!");
+      } else {
+        const [year, month, day] = dia.split("-").map((v) => parseInt(v, 10));
+        const d = new Date(year, month - 1, day);
+        const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+
+        await addDoc(collection(db, "chamadasProfessores"), {
+          timestamp: Timestamp.now(),
+          dia,
+          weekday,
+          quemFez: currentUser?.email || "desconhecido",
+          lista: chamadaListProf,
+        });
+        alert("Chamada de professores registrada com sucesso!");
+      }
+      setChamadaProf({});
+    }
+  };
+
+  if (loading) return <div>Carregando dados da chamada...</div>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Fazer Chamada</h1>
-      <div className="mb-4">
-        <label className="font-semibold mr-2">Dia:</label>
+    <div className="p-3 sm:p-4 max-w-4xl mx-auto">
+      <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">
+        Fazer Chamada
+      </h1>
+      <div className="mb-4 flex gap-2 flex-wrap">
+        <button
+          type="button"
+          className={`flex-1 min-w-[120px] text-sm sm:text-base px-3 py-2 rounded border ${tipoChamada === "alunos" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+          onClick={() => {
+            setTipoChamada("alunos");
+            setEditavel(true);
+          }}>
+          Alunos
+        </button>
+        <button
+          type="button"
+          className={`flex-1 min-w-[120px] text-sm sm:text-base px-3 py-2 rounded border ${tipoChamada === "professores" ? "bg-primary text-primary-foreground" : "bg-background"}`}
+          onClick={() => {
+            setTipoChamada("professores");
+            setEditavel(true);
+          }}>
+          Professores
+        </button>
+      </div>
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
+        <label className="font-semibold">Dia:</label>
         <input
           type="date"
           value={dia}
           onChange={(e) => setDia(e.target.value)}
-          className="border rounded px-2 py-1"
+          className="border rounded px-2 py-1 w-full sm:w-auto max-w-xs"
         />
       </div>
-      {chamadaExistente && (
+      {tipoChamada === "alunos" && chamadaExistente && (
         <div className="mb-4 flex items-center gap-4">
           <span className="text-destructive font-semibold">
             Já existe chamada para o dia selecionado.
@@ -216,43 +445,344 @@ const NovaChamada: React.FC = () => {
           </div>
         </div>
       )}
+      {tipoChamada === "professores" && chamadaProfExistente && (
+        <div className="mb-4 flex items-center gap-4">
+          <span className="text-destructive font-semibold">
+            Já existe chamada de professores para o dia selecionado.
+          </span>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={editavel}
+              onCheckedChange={setEditavel}
+              id="switch-editavel-professores"
+            />
+            <label
+              htmlFor="switch-editavel-professores"
+              className="text-sm font-medium">
+              Habilitar edição
+            </label>
+          </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <fieldset disabled={!editavel}>
-          <div className="w-full overflow-x-auto mb-4 rounded-xl border">
-            <Table className=" text-sm">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
-                    Nome
-                  </TableHead>
-                  <TableHead className="border px-2 py-1">Presença</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alunos.map((aluno) => (
-                  <TableRow key={aluno.id}>
-                    <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
-                      {getPreferredName(aluno.nome, (aluno as any).nome_social)}
-                    </TableCell>
-                    <TableCell className="border px-2 py-1 text-center">
-                      <button
-                        type="button"
-                        className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-success text-foreground" : "bg-muted"}`}
-                        onClick={() => handlePresenca(aluno.id, true)}>
-                        ✓
-                      </button>
-                      <button
-                        type="button"
-                        className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
-                        onClick={() => handlePresenca(aluno.id, false)}>
-                        X
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {tipoChamada === "alunos" && (
+            <>
+              {isMobile ? (
+                <div className="mb-4 space-y-2">
+                  {alunos.map((aluno) => {
+                    const registro = chamada[aluno.id];
+                    const presenca = registro?.presenca;
+                    return (
+                      <div
+                        key={aluno.id}
+                        className="rounded-xl border bg-card px-3 py-2 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {getPreferredName(
+                                aluno.nome,
+                                (aluno as any).nome_social,
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0 flex gap-1">
+                            <button
+                              type="button"
+                              className={`px-3 py-2 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, true)}>
+                              Presente
+                            </button>
+                            <button
+                              type="button"
+                              className={`px-3 py-2 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, false)}>
+                              Falta
+                            </button>
+                          </div>
+                        </div>
+                        {presenca === false && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium">
+                              Justificativa
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded px-2 py-1 text-xs"
+                              placeholder="Digite a justificativa..."
+                              value={registro?.justificativa || ""}
+                              onChange={(e) =>
+                                handleJustificativa(aluno.id, e.target.value)
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto mb-4 rounded-xl border">
+                  <Table className="text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
+                          Nome
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Presença
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Justificativa (quando falta)
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {alunos.map((aluno) => (
+                        <TableRow key={aluno.id}>
+                          <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
+                            {getPreferredName(
+                              aluno.nome,
+                              (aluno as any).nome_social,
+                            )}
+                          </TableCell>
+                          <TableCell className="border px-2 py-1 text-center">
+                            <button
+                              type="button"
+                              className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, true)}>
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, false)}>
+                              X
+                            </button>
+                          </TableCell>
+                          <TableCell className="border px-2 py-1">
+                            <input
+                              type="text"
+                              className="w-full border rounded px-2 py-1 text-xs"
+                              placeholder="Digite a justificativa..."
+                              value={chamada[aluno.id]?.justificativa || ""}
+                              onChange={(e) =>
+                                handleJustificativa(aluno.id, e.target.value)
+                              }
+                              disabled={chamada[aluno.id]?.presenca !== false}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
+          {tipoChamada === "professores" && (
+            <>
+              {isMobile ? (
+                <div className="mb-4 space-y-3">
+                  {professoresDia.length === 0 && (
+                    <div className="rounded-xl border bg-card px-3 py-2 text-center text-sm text-muted-foreground">
+                      Nenhum professor cadastrado para este dia na grade.
+                    </div>
+                  )}
+                  {professoresDia.map((prof, index) => {
+                    const horario = horarios[index];
+                    const registro = chamadaProf[prof.id];
+                    const presenca = registro?.presenca;
+                    return (
+                      <div
+                        key={prof.id}
+                        className="rounded-xl border bg-card px-3 py-2 space-y-2">
+                        <div>
+                          {horario && (
+                            <p className="text-xs text-muted-foreground">
+                              {horario[0]} - {horario[1]}
+                            </p>
+                          )}
+                          <p className="font-semibold text-sm">
+                            {prof.materia}
+                          </p>
+                          <p className="text-xs">{prof.professorTitular}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className={`flex-1 px-3 py-2 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                            onClick={() =>
+                              handlePresencaProfessor(prof.id, true)
+                            }>
+                            Presente
+                          </button>
+                          <button
+                            type="button"
+                            className={`flex-1 px-3 py-2 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                            onClick={() =>
+                              handlePresencaProfessor(prof.id, false)
+                            }>
+                            Falta
+                          </button>
+                        </div>
+
+                        {presenca === false && (
+                          <>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">
+                                Professor substituto (opcional)
+                              </label>
+                              <select
+                                className="border rounded px-2 py-1 w-full bg-background text-xs"
+                                value={registro?.substituto || ""}
+                                onChange={(e) =>
+                                  handleSubstitutoProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }>
+                                <option value="">Selecione...</option>
+                                {professorOptions.map((nome) => (
+                                  <option key={nome} value={nome}>
+                                    {nome}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">
+                                Justificativa (quando falta)
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full border rounded px-2 py-1 text-xs"
+                                placeholder="Digite a justificativa..."
+                                value={registro?.justificativa || ""}
+                                onChange={(e) =>
+                                  handleJustificativaProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto mb-4 rounded-xl border">
+                  <Table className=" text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
+                          Horário / Matéria / Professor
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Presença
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Professor substituto (opcional)
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Justificativa (quando falta)
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {professoresDia.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={4}
+                            className="border px-2 py-2 text-center text-muted-foreground">
+                            Nenhum professor cadastrado para este dia na grade.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {professoresDia.map((prof, index) => {
+                        const horario = horarios[index];
+                        const registro = chamadaProf[prof.id];
+                        const presenca = registro?.presenca;
+                        return (
+                          <TableRow key={prof.id}>
+                            <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
+                              <div className="flex flex-col">
+                                {horario && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {horario[0]} - {horario[1]}
+                                  </span>
+                                )}
+                                <span className="font-semibold">
+                                  {prof.materia}
+                                </span>
+                                <span className="text-xs">
+                                  {prof.professorTitular}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="border px-2 py-1 text-center">
+                              <button
+                                type="button"
+                                className={`mr-2 px-2 py-1 rounded ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                                onClick={() =>
+                                  handlePresencaProfessor(prof.id, true)
+                                }>
+                                ✓
+                              </button>
+                              <button
+                                type="button"
+                                className={`px-2 py-1 rounded ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                                onClick={() =>
+                                  handlePresencaProfessor(prof.id, false)
+                                }>
+                                X
+                              </button>
+                            </TableCell>
+                            <TableCell className="border px-2 py-1 text-center">
+                              <select
+                                className="border rounded px-2 py-1 w-full bg-background"
+                                value={registro?.substituto || ""}
+                                onChange={(e) =>
+                                  handleSubstitutoProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }>
+                                <option value="">Selecione...</option>
+                                {professorOptions.map((nome) => (
+                                  <option key={nome} value={nome}>
+                                    {nome}
+                                  </option>
+                                ))}
+                              </select>
+                            </TableCell>
+                            <TableCell className="border px-2 py-1 text-center">
+                              <input
+                                type="text"
+                                className="w-full border rounded px-2 py-1"
+                                placeholder="Digite a justificativa..."
+                                value={registro?.justificativa || ""}
+                                onChange={(e) =>
+                                  handleJustificativaProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }
+                                disabled={presenca}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
           <button
             type="submit"
             className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"

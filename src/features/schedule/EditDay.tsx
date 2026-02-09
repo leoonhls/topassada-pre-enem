@@ -40,7 +40,9 @@ export default function EditDaySchedule({ day, onSave }: Props) {
   useEffect(() => {
     fetchUserAsync().then((res) => {
       setProfessores(
-        res.items.filter((u) => u.nivel === "professor").map((u) => u.name),
+        res.items
+          .filter((u) => u.nivel === "professor")
+          .map((u) => (u as any).nome_social || u.name),
       );
     });
   }, [fetchUserAsync]);
