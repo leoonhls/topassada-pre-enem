@@ -11,11 +11,9 @@ function RootLayout() {
     <ThemeProvider>
       <SidebarProvider>
         {user && <AppSidebar />}
-
-        <div className="w-full">
+        <div className="w-full min-h-screen overflow-x-hidden">
           <Header />
-
-          <div className="">
+          <div className="w-full overflow-x-hidden">
             <Outlet />
             <Toaster />
           </div>

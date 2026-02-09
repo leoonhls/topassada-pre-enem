@@ -30,6 +30,7 @@ import appIcon from "@/assets/to-passada-icon.png";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { userData } = useAuth(); // Obtém os dados do usuário do contexto
+  const location = useLocation();
 
   const data = {
     user: {
@@ -42,27 +43,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Início",
         url: "/",
-        isActive: isActiveRoute("/"),
+        isActive: isActiveRoute(location.pathname, "/"),
       },
       {
         title: "Chamadas",
         url: "chamadas",
-        isActive: isActiveRoute("chamadas"),
+        isActive: isActiveRoute(location.pathname, "chamadas"),
       },
       {
         title: "Fazer Chamada",
         url: "chamada",
-        isActive: isActiveRoute("chamada"),
+        isActive: isActiveRoute(location.pathname, "chamada"),
       },
       {
         title: "Equipe",
         url: "equipe",
-        isActive: isActiveRoute("equipe"),
+        isActive: isActiveRoute(location.pathname, "equipe"),
       },
       {
         title: "Alunos",
         url: "alunos",
-        isActive: isActiveRoute("alunos"),
+        isActive: isActiveRoute(location.pathname, "alunos"),
       },
     ],
   };
