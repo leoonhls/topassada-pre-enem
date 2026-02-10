@@ -18,7 +18,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 export function NavMain({
   items,
@@ -38,6 +37,12 @@ export function NavMain({
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
 
+  const toAbs = (url: string) => {
+    if (!url) return "/";
+    if (url === "#") return "#";
+    return url.startsWith("/") ? url : `/${url}`;
+  };
+
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -52,6 +57,7 @@ export function NavMain({
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     tooltip={item.title}
+                    isActive={!!item.isActive}
                     className={item.isActive ? "" : "text-muted-foreground"}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
@@ -62,18 +68,19 @@ export function NavMain({
                   <SidebarMenuSub>
                     {item.items?.map((subItem, i) => (
                       <SidebarMenuSubItem key={subItem.title + i}>
-                        <SidebarMenuSubButton asChild>
-                          <Button
-                            className={`p- w-full justify-start items-center ${
-                              subItem.isActive ? "" : "text-muted-foreground"
-                            }`}
-                            onClick={(_) => {
-                              navigate(`${subItem.url}`);
-                              setOpenMobile(false);
-                            }}
-                            variant="ghost">
-                            {subItem.title}
-                          </Button>
+                        <SidebarMenuSubButton
+                          href={toAbs(subItem.url)}
+                          isActive={!!subItem.isActive}
+                          className={
+                            subItem.isActive ? "" : "text-muted-foreground"
+                          }
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const target = toAbs(subItem.url);
+                            if (target !== "#") navigate(target);
+                            setOpenMobile(false);
+                          }}>
+                          <span>{subItem.title}</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -85,9 +92,11 @@ export function NavMain({
             <SidebarMenuItem key={item.title + i}>
               <SidebarMenuButton
                 tooltip={item.title}
+                isActive={!!item.isActive}
                 className={item.isActive ? "" : "text-muted-foreground"}
                 onClick={(_) => {
-                  navigate(`${item.url}`);
+                  const target = toAbs(item.url);
+                  if (target !== "#") navigate(target);
                   setOpenMobile(false);
                 }}>
                 {" "}
@@ -95,7 +104,7 @@ export function NavMain({
                 <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )
+          ),
         )}
       </SidebarMenu>
     </SidebarGroup>

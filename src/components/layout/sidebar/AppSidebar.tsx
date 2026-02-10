@@ -47,23 +47,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Chamadas",
-        url: "chamadas",
-        isActive: isActiveRoute(location.pathname, "chamadas"),
+        url: "/chamadas",
+        isActive: isActiveRoute(location.pathname, "/chamadas"),
       },
       {
         title: "Fazer Chamada",
-        url: "chamada",
-        isActive: isActiveRoute(location.pathname, "chamada"),
+        url: "/chamada",
+        isActive: isActiveRoute(location.pathname, "/chamada"),
       },
       {
         title: "Equipe",
-        url: "equipe",
-        isActive: isActiveRoute(location.pathname, "equipe"),
+        url: "/equipe",
+        isActive: isActiveRoute(location.pathname, "/equipe"),
       },
       {
         title: "Alunos",
-        url: "alunos",
-        isActive: isActiveRoute(location.pathname, "alunos"),
+        url: "/alunos",
+        isActive: isActiveRoute(location.pathname, "/alunos"),
       },
     ],
   };

@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Day } from "@/types/Day";
 import { Materias } from "@/types/Materias";
-import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
-import { User } from "@/features/user/User";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import { db } from "@/firebase/config";
 import {
   AlertDialog,
@@ -34,28 +39,44 @@ export default function EditFullSchedule({
   days: Day[];
   onSave?: (updated: Day[]) => void;
 }) {
-  const [edit, setEdit] = useState(() =>
-    days.map((d) => ({ ...d, lessons: [...d.lessons] })),
+  const initialEdit = useMemo(
+    () => days.map((d) => ({ ...d, lessons: [...(d.lessons || [])] })),
+    [days],
   );
-  const { getFromCacheOrFetch } = useFirebaseDocumentCache<User>("users");
-  const [professores, setProfessores] = useState<User[]>([]);
+  const [edit, setEdit] = useState(() => initialEdit);
+  const [professores, setProfessores] = useState<string[]>([]);
+  const [openSelectId, setOpenSelectId] = useState<string | null>(null);
 
-  // Carrega todos os professores ativos uma vez
-  useState(() => {
-    (async () => {
-      const res = await fetch("/professores.json")
-        .then((r) => r.json())
-        .catch(() => []);
-      const profs: User[] = [];
-      for (const prof of res) {
-        if (prof.nivel === "professor") {
-          const cached = await getFromCacheOrFetch(prof.id);
-          if (cached) profs.push(cached);
-        }
-      }
-      setProfessores(profs);
-    })();
-  });
+  // Mantém o estado sincronizado se a lista de dias vier atualizada do pai
+  useEffect(() => {
+    setEdit(initialEdit);
+  }, [initialEdit]);
+
+  // Carrega professores do Firestore (evita depender de arquivo estático e evita N getDoc)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchProfessores = async () => {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("nivel", "==", "professor"));
+      const snap = await getDocs(q);
+
+      const names = snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }))
+        .filter((u) => u.active)
+        .map((u) => u.nome_social || u.name)
+        .filter(Boolean)
+        .sort((a: string, b: string) => a.localeCompare(b));
+
+      if (!cancelled) setProfessores(names);
+    };
+    fetchProfessores().catch((e) => {
+      console.error("Erro ao buscar professores:", e);
+      if (!cancelled) setProfessores([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (
     dayIdx: number,
@@ -78,7 +99,8 @@ export default function EditFullSchedule({
   };
 
   const handleSave = async () => {
-    // Atualiza todos os dias no Firestore
+    // Atualiza todos os dias no Firestore em batch (menos latência)
+    const batch = writeBatch(db);
     for (const d of edit) {
       const docRef = doc(db, "schedules", d.day);
       const data = d.lessons.reduce(
@@ -88,8 +110,9 @@ export default function EditFullSchedule({
         },
         {} as Record<string, { materia: string; professor: string }>,
       );
-      await setDoc(docRef, data, { merge: true });
+      batch.set(docRef, data, { merge: true });
     }
+    await batch.commit();
     onSave?.(edit);
   };
 
@@ -117,38 +140,56 @@ export default function EditFullSchedule({
                     <span className="w-8 text-center font-bold">
                       {lessonIdx + 1}º
                     </span>
-                    <Select
-                      value={day.lessons[lessonIdx]?.materia || ""}
-                      onValueChange={(value) =>
-                        handleChange(dayIdx, lessonIdx, "materia", value)
-                      }>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Matéria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Materias.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={day.lessons[lessonIdx]?.professor || ""}
-                      onValueChange={(value) =>
-                        handleChange(dayIdx, lessonIdx, "professor", value)
-                      }>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Professor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {professores.map((p) => (
-                          <SelectItem key={p.id} value={p.name}>
-                            {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {(() => {
+                      const materiaId = `day-${dayIdx}-lesson-${lessonIdx}-materia`;
+                      return (
+                        <Select
+                          open={openSelectId === materiaId}
+                          onOpenChange={(open) =>
+                            setOpenSelectId(open ? materiaId : null)
+                          }
+                          value={day.lessons[lessonIdx]?.materia || ""}
+                          onValueChange={(value) =>
+                            handleChange(dayIdx, lessonIdx, "materia", value)
+                          }>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Matéria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Materias.map((m) => (
+                              <SelectItem key={m} value={m}>
+                                {m}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    })()}
+                    {(() => {
+                      const professorId = `day-${dayIdx}-lesson-${lessonIdx}-professor`;
+                      return (
+                        <Select
+                          open={openSelectId === professorId}
+                          onOpenChange={(open) =>
+                            setOpenSelectId(open ? professorId : null)
+                          }
+                          value={day.lessons[lessonIdx]?.professor || ""}
+                          onValueChange={(value) =>
+                            handleChange(dayIdx, lessonIdx, "professor", value)
+                          }>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Professor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {professores.map((p) => (
+                              <SelectItem key={p} value={p}>
+                                {p}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

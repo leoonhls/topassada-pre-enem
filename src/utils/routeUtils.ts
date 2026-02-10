@@ -4,22 +4,26 @@ export const isActiveRoute = (
   url: string,
   items?: { url: string }[],
 ) => {
-  // Para rota raiz
-  if (url === "/" && pathname === "/") {
-    return true;
-  }
+  const normalize = (p: string) => {
+    if (!p) return "/";
+    if (p === "#") return "#";
+    const withSlash = p.startsWith("/") ? p : `/${p}`;
+    if (withSlash.length > 1 && withSlash.endsWith("/")) {
+      return withSlash.slice(0, -1);
+    }
+    return withSlash;
+  };
 
-  // Para outras rotas principais
-  if (url !== "/" && url !== "#" && pathname.includes(url)) {
-    return true;
-  }
+  const isActivePath = (currentPath: string, target: string) => {
+    const current = normalize(currentPath);
+    const t = normalize(target);
+    if (t === "#") return false;
+    if (t === "/") return current === "/";
+    return current === t || current.startsWith(`${t}/`);
+  };
 
-  // Para itens de submenu
-  if (items) {
-    return items.some(
-      (item) => item.url !== "#" && pathname.includes(item.url),
-    );
-  }
-
+  if (isActivePath(pathname, url)) return true;
+  if (items?.length)
+    return items.some((item) => isActivePath(pathname, item.url));
   return false;
 };
