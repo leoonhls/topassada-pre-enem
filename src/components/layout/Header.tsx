@@ -18,7 +18,14 @@ function Header() {
       <div className="flex items-center justify-between">
         <div className="flex gap-2 items-center">
           {user && <SidebarTrigger className="md:hidden " />}
-          <div>Tô Passada - Pré Enem</div>
+          <div className="flex items-baseline gap-2 leading-none select-none">
+            <h1 className="flex italic text-xl md:text-2xl font-bold">
+              Tô Passada!
+            </h1>
+            <span className="text-xs italic font-medium text-primary-foreground/80">
+              Pré-Enem
+            </span>
+          </div>
         </div>
         {!user && (
           <Link
