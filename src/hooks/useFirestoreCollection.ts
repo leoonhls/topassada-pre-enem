@@ -38,32 +38,55 @@ interface CollectionResponse<T> {
 
 // Hook genérico
 export function useFirestoreCollection<T extends { id: string }>(
-  config: CollectionConfig<T>
+  config: CollectionConfig<T>,
 ) {
   const {
-    collectionName, 
+    collectionName,
     pageSize = 6,
-    defaultOrderBy = { field: "name" as keyof T },
+    defaultOrderBy = { field: "name" as keyof T, direction: "asc" },
     fieldsToCapitalize = [],
     defaultFilters = [],
   } = config;
 
   const fetchItems = async (
     filters: Record<string, any> = {},
-    lastDoc?: DocumentSnapshot | null
+    lastDoc?: DocumentSnapshot | null,
   ): Promise<CollectionResponse<T>> => {
     const coll = collection(db, collectionName);
 
     // Array com as restrições da query
     const queryArray: QueryConstraint[] = [...defaultFilters];
 
+    // Filtros simples adicionais (igualdade) vindos do caller
+    Object.entries(filters).forEach(([field, value]) => {
+      if (value === undefined || value === null || value === "") return;
+      queryArray.push(where(field, "==", value));
+    });
+
+    // Ordenação padrão (para paginação consistente)
+    if (defaultOrderBy?.field) {
+      queryArray.push(
+        orderBy(String(defaultOrderBy.field), defaultOrderBy.direction),
+      );
+    }
+
+    // Paginação
+    if (lastDoc) {
+      queryArray.push(startAfter(lastDoc));
+    }
+    // Busca 1 a mais para saber se existe próxima página
+    queryArray.push(limit(pageSize + 1));
+
     // Executa a query
     const queryRef = query(coll, ...queryArray);
     const snapshot = await getDocs(queryRef);
     const sizeCollection = await getCountFromServer(coll);
 
+    const pageDocs = snapshot.docs.slice(0, pageSize);
+    const hasMore = snapshot.docs.length > pageSize;
+
     // Converte os documentos
-    const items = snapshot.docs.slice(0, pageSize).map((doc) => {
+    const items = pageDocs.map((doc) => {
       const data = doc.data() as T;
       const processedData = { ...data, id: doc.id };
 
@@ -71,7 +94,7 @@ export function useFirestoreCollection<T extends { id: string }>(
       fieldsToCapitalize.forEach((field) => {
         if (processedData[field] && typeof processedData[field] === "string") {
           (processedData[field] as any) = capitalizeWords(
-            processedData[field] as string
+            processedData[field] as string,
           );
         }
       });
@@ -81,9 +104,9 @@ export function useFirestoreCollection<T extends { id: string }>(
 
     return {
       items,
-      lastDoc: snapshot.docs[pageSize - 1] || null,
-      hasMore: snapshot.docs.length > pageSize,
-      total: snapshot.docs.length,
+      lastDoc: pageDocs[pageDocs.length - 1] || null,
+      hasMore,
+      total: items.length,
       collSize: sizeCollection.data().count,
     };
   };
