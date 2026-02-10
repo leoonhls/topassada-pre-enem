@@ -23,8 +23,8 @@ import { Edit } from "lucide-react";
 import { capitalizeFirstLetter } from "@/utils/stringUtils";
 import { useEffect, useState } from "react";
 import { Materias } from "@/types/Materias";
+import { useUsers } from "@/features/user/useUsers";
 import { Day } from "@/types/Day";
-import { collection, getDocs, query, where } from "firebase/firestore";
 
 type Props = {
   day: Day;
@@ -34,27 +34,18 @@ type Props = {
 export default function EditDaySchedule({ day, onSave }: Props) {
   // Estado local para edição dos 4 horários
   const [lessons, setLessons] = useState(() => [...(day.lessons || [])]);
+  const { fetchUserAsync } = useUsers();
   const [professores, setProfessores] = useState<string[]>([]);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchProfessores = async () => {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("nivel", "==", "professor"));
-      const snap = await getDocs(q);
-      const names = snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as any) }))
-        .filter((u) => u.active)
-        .map((u) => u.nome_social || u.name)
-        .filter(Boolean)
-        .sort((a: string, b: string) => a.localeCompare(b));
-      if (!cancelled) setProfessores(names);
-    };
-    fetchProfessores();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    fetchUserAsync().then((res) => {
+      setProfessores(
+        res.items
+          .filter((u) => u.nivel === "professor")
+          .map((u) => (u as any).nome_social || u.name),
+      );
+    });
+  }, [fetchUserAsync]);
 
   const handleChange = (
     idx: number,

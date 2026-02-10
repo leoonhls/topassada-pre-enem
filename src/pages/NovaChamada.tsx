@@ -15,7 +15,6 @@ import {
   Timestamp,
   query,
   where,
-  limit,
   updateDoc,
   doc,
   getDoc,
@@ -23,11 +22,11 @@ import {
 import { db } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
 import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
+import { useUsers } from "@/features/user/useUsers";
 import { horarios } from "@/features/schedule/horarios";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/common/LoadingState";
-import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
 
 interface Aluno {
   id: string;
@@ -95,16 +94,12 @@ const NovaChamada: React.FC = () => {
   const [professorOptions, setProfessorOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useAuth();
+  const { fetchUserAsync } = useUsers();
   const hoje = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const dataHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
   const [dia, setDia] = useState<string>(dataHoje);
   const isMobile = useIsMobile();
-
-  const { getFromCacheOrFetch: getScheduleFromCacheOrFetch } =
-    useFirebaseDocumentCache<
-      Record<string, { materia: string; professor: string }>
-    >("schedules");
 
   useEffect(() => {
     const fetchAlunos = async () => {
@@ -120,17 +115,12 @@ const NovaChamada: React.FC = () => {
     };
 
     const fetchProfessores = async () => {
-      // Evita varrer todos os usuários: busca apenas professores e filtra ativos no client
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("nivel", "==", "professor"));
-      const snap = await getDocs(q);
-      const names = snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as any) }))
-        .filter((u) => u.active)
-        .map((u) => u.nome_social || u.name)
-        .filter(Boolean)
-        .sort((a: string, b: string) => a.localeCompare(b));
-      setProfessorOptions(names);
+      const res = await fetchUserAsync();
+      setProfessorOptions(
+        res.items
+          .filter((u) => (u as any).nivel === "professor")
+          .map((u) => (u as any).nome_social || u.name),
+      );
     };
 
     setLoading(true);
@@ -162,11 +152,7 @@ const NovaChamada: React.FC = () => {
 
     const checkChamadaAlunos = async () => {
       const chamadasRef = collection(db, "chamadas");
-      const chamadasQuery = query(
-        chamadasRef,
-        where("dia", "==", dia),
-        limit(1),
-      );
+      const chamadasQuery = query(chamadasRef, where("dia", "==", dia));
       const querySnapshot = await getDocs(chamadasQuery);
       let encontrada: ChamadaDocument | null = null;
       querySnapshot.forEach((snap) => {
@@ -204,9 +190,10 @@ const NovaChamada: React.FC = () => {
       if (!weekdayKey) {
         setProfessoresDia([]);
       } else {
-        const schedule = await getScheduleFromCacheOrFetch(weekdayKey);
-        if (schedule) {
-          const data = schedule as unknown as Record<
+        const docRef = doc(collection(db, "schedules"), weekdayKey);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Record<
             string,
             { materia: string; professor: string }
           >;
@@ -226,11 +213,7 @@ const NovaChamada: React.FC = () => {
 
       // Verifica se já existe chamada de professores para o dia
       const chamadasProfRef = collection(db, "chamadasProfessores");
-      const chamadasProfQuery = query(
-        chamadasProfRef,
-        where("dia", "==", dia),
-        limit(1),
-      );
+      const chamadasProfQuery = query(chamadasProfRef, where("dia", "==", dia));
       const querySnapshot = await getDocs(chamadasProfQuery);
       let encontradaProf: ChamadaProfessorDocument | null = null;
       querySnapshot.forEach((snap) => {
