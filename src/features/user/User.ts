@@ -6,6 +6,7 @@ export interface User {
   nome_social?: string;
   cpf?: string;
   email?: string;
+  authUid?: string;
   phone?: string;
   active: boolean;
   pfpPath?: string;

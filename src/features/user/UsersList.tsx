@@ -1,3 +1,9 @@
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUsers } from "./useUsers";
@@ -24,10 +30,24 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/common/LoadingState";
 import { Label } from "@/components/ui/label";
-import { db } from "@/firebase/config";
-import { doc, updateDoc } from "firebase/firestore";
+import { db, firebaseConfig } from "@/firebase/config";
+import { updateDocWithLog } from "@/firebase/firestoreWithLog";
+import { Timestamp, doc, updateDoc } from "firebase/firestore";
 import { getPreferredName } from "@/utils/stringUtils";
 import { useAuth } from "@/contexts/AuthContext";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getSecondaryAuth() {
+  const appName = "Secondary";
+  const hasApp = getApps().some((app) => app.name === appName);
+  const app = hasApp ? getApp(appName) : initializeApp(firebaseConfig, appName);
+  return getAuth(app);
+}
+
+function generateTempPassword() {
+  return `Tmp#${Math.random().toString(36).slice(2)}${Date.now()}`;
+}
 
 interface UsersListProps {
   refreshSignal?: number;
@@ -41,6 +61,8 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
   const [loading, setLoading] = useState(true);
   const [collSize, setCollSize] = useState("");
   const [editUser, setEditUser] = useState<User | null>(null);
+
+  const [originalEmail, setOriginalEmail] = useState<string | undefined>(undefined);
 
   const { fetchUserAsync } = useUsers();
   const { userData } = useAuth();
@@ -63,15 +85,55 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
     }
 
     try {
-      const { id, ...data } = editUser;
-      const { email: _email, ...allowedData } = data;
-      await updateDoc(doc(db, "users", id), allowedData);
+      const { id, email: currentEmailInForm, ...restData } = editUser;
+
+      // Usuário já tinha e-mail → e-mail é imutável
+      if (originalEmail) {
+        await updateDoc(doc(db, "users", id), restData);
+        setUsers((prev) => prev.map((u) => (u.id === id ? editUser : u)));
+        toast.success("Usuário atualizado com sucesso.");
+        setEditUser(null);
+        return;
+      }
+
+      // Usuário não tinha e-mail e admin digitou um → criar conta Auth + vincular + enviar convite
+      const newEmail = (currentEmailInForm || "").trim().toLowerCase();
+      if (newEmail) {
+        if (!emailRegex.test(newEmail)) {
+          toast.warning("E-mail inválido.");
+          return;
+        }
+        const secondaryAuth = getSecondaryAuth();
+        const cred = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          newEmail,
+          generateTempPassword(),
+        );
+        await updateDocWithLog(
+          doc(db, "users", id),
+          { ...restData, email: newEmail, authUid: cred.user.uid, updatedAt: Timestamp.now() },
+          `E-mail "${newEmail}" vinculado ao usuário "${editUser.name}" e convite enviado.`,
+        );
+        await sendPasswordResetEmail(secondaryAuth, newEmail);
+        const updatedUser = { ...editUser, email: newEmail, authUid: cred.user.uid };
+        setUsers((prev) => prev.map((u) => (u.id === id ? updatedUser : u)));
+        toast.success("E-mail adicionado e convite enviado!");
+        setEditUser(null);
+        return;
+      }
+
+      // Sem e-mail antes, sem e-mail agora → salvar normalmente
+      await updateDoc(doc(db, "users", id), restData);
       setUsers((prev) => prev.map((u) => (u.id === id ? editUser : u)));
       toast.success("Usuário atualizado com sucesso.");
       setEditUser(null);
     } catch (error: any) {
       console.error(error);
-      toast.warning("Erro ao atualizar usuário.");
+      const msg =
+        error?.code === "auth/email-already-in-use"
+          ? "Este e-mail já está em uso em outra conta."
+          : error?.message || "Erro ao atualizar usuário.";
+      toast.warning(msg);
     }
   };
 
@@ -122,7 +184,7 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditUser(user)}
+                    onClick={() => { setEditUser(user); setOriginalEmail(user.email); }}
                     disabled={!isAdmin}>
                     Editar
                   </Button>
@@ -139,7 +201,7 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
       <Dialog
         open={!!editUser}
         onOpenChange={(open) => {
-          if (!open) setEditUser(null);
+           if (!open) { setEditUser(null); setOriginalEmail(undefined); }
         }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -190,12 +252,22 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
                 <Label className="text-muted-foreground italic ml-1">
                   E-mail
                 </Label>
-                <Input
-                  value={editUser.email || ""}
-                  placeholder="Sem e-mail cadastrado"
-                  disabled
-                />
+                {originalEmail ? (
+                  <Input value={editUser.email || ""} disabled />
+                ) : (
+                  <Input
+                    type="email"
+                    value={editUser.email || ""}
+                    onChange={(e) => handleEditChange("email", e.target.value)}
+                    placeholder="Adicionar e-mail para acesso ao sistema"
+                  />
+                )}
               </div>
+                {originalEmail ? null : (
+                  <p className="text-xs text-muted-foreground -mt-2 ml-1">
+                    Ao salvar com e-mail, um convite será enviado automaticamente.
+                  </p>
+                )}
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground italic ml-1">
                   Telefone

@@ -7,7 +7,7 @@ import { getDownloadURL, ref } from "firebase/storage";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db, storage } from "../firebase/config";
 
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, query, where } from "firebase/firestore";
 
 import type { User } from "firebase/auth";
 import type { ReactNode } from "react";
@@ -36,9 +36,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async (uid: string): Promise<boolean> => {
-    const userDoc = await getDoc(doc(db, "users", uid));
-    if (userDoc.exists()) {
-      const data = userDoc.data() as {
+    // Try direct UID lookup first; fallback to authUid field for name-only users upgraded with email
+    const directDoc = await getDoc(doc(db, "users", uid));
+    let docData: ReturnType<typeof directDoc.data> | undefined;
+    if (directDoc.exists()) {
+      docData = directDoc.data();
+    } else {
+      const q = query(collection(db, "users"), where("authUid", "==", uid));
+      const qs = await getDocs(q);
+      if (!qs.empty) docData = qs.docs[0].data();
+    }
+    if (docData) {
+      const data = docData as {
         adm?: boolean;
         name: string;
         email: string;
@@ -66,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         pfpUrl,
       });
       return true;
-    } else {
+    } else  {
       setUserData(null);
       return false;
     }
