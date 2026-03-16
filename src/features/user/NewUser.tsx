@@ -10,31 +10,26 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { db, firebaseConfig, storage } from "@/firebase/config";
-import { setDocWithLog } from "@/firebase/firestoreWithLog";
+import { db } from "@/firebase/config";
+import { addDocWithLog } from "@/firebase/firestoreWithLog";
 import { handleKeyDown } from "@/utils/HandleKeyDown";
-import { initializeApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
-import { doc, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import { Timestamp, collection } from "firebase/firestore";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { User } from "./User";
 import { PlusSquareIcon } from "lucide-react";
 
-export const NewUser: React.FC = () => {
+interface NewUserProps {
+  onCompleted?: () => void;
+}
+
+export const NewUser: React.FC<NewUserProps> = ({ onCompleted }) => {
   const [user, setUser] = useState<Omit<User, "id">>({
     name: "",
     nome_social: "",
-    cpf: "",
-    phone: "",
-    email: "",
     active: true,
     nivel: "professor",
   });
-
-  const [pfpFile, setPfpFile] = useState<File | null>(null);
-  const [password, setPassword] = useState("");
 
   const handleSelectChange = useCallback(
     (field: keyof typeof user, selected: any, isMulti = false) => {
@@ -58,24 +53,12 @@ export const NewUser: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setUser({ ...user, name: user.name.toLowerCase() });
-      const appSecondary = initializeApp(firebaseConfig, "Secondary");
-      const secundaryAuth = getAuth(appSecondary);
-      const cred = await createUserWithEmailAndPassword(
-        secundaryAuth,
-        user.email,
-        password,
-      );
-      let pfpPath = "";
-      if (pfpFile) {
-        pfpPath = `pfps/${cred.user.uid}_${pfpFile.name}`;
-        await uploadBytes(ref(storage, pfpPath), pfpFile);
-      }
-      await setDocWithLog(
-        doc(db, "users", cred.user.uid),
+      const normalizedName = user.name.trim().toLowerCase();
+      await addDocWithLog(
+        collection(db, "users"),
         {
           ...user,
-          name: user.name.toLowerCase(),
+          name: normalizedName,
           createdAt: Timestamp.now(),
         },
         `Usuário "${user.name}" cadastrado com sucesso.`,
@@ -84,14 +67,10 @@ export const NewUser: React.FC = () => {
       setUser({
         name: "",
         nome_social: "",
-        cpf: "",
-        phone: "",
-        email: "",
         active: true,
         nivel: "professor",
       });
-      setPassword("");
-      setPfpFile(null);
+      onCompleted?.();
     } catch (err: any) {
       toast.warning(err.message);
     }
@@ -102,11 +81,12 @@ export const NewUser: React.FC = () => {
       <DialogTrigger asChild>
         <Button variant={"outline"} size={"sm"}>
           <PlusSquareIcon />
+          Novo nome
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Cadastrar Novo User</DialogTitle>
+          <DialogTitle>Cadastrar por nome</DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
         <form
@@ -118,6 +98,7 @@ export const NewUser: React.FC = () => {
             <Input
               value={user.name}
               onChange={(e) => setUser({ ...user, name: e.target.value })}
+              placeholder="Nome completo"
               required
             />
           </div>
@@ -130,32 +111,7 @@ export const NewUser: React.FC = () => {
               onChange={(e) =>
                 setUser({ ...user, nome_social: e.target.value })
               }
-            />
-          </div>
-          <div className=" flex flex-col gap-1.5">
-            <Label className="text-muted-foreground italic ml-1">CPF</Label>
-            <Input
-              value={user.cpf}
-              onChange={(e) => setUser({ ...user, cpf: e.target.value })}
-              required
-            />
-          </div>
-          <div className=" flex flex-col gap-1.5">
-            <Label className="text-muted-foreground italic ml-1">Email</Label>
-            <Input
-              value={user.email}
-              onChange={(e) => setUser({ ...user, email: e.target.value })}
-              required
-            />
-          </div>
-          <div className=" flex flex-col gap-1.5">
-            <Label className="text-muted-foreground italic ml-1">
-              Telefone
-            </Label>
-            <Input
-              value={user.phone}
-              onChange={(e) => setUser({ ...user, phone: e.target.value })}
-              required
+              placeholder="Nome social"
             />
           </div>
           <div className=" flex flex-col gap-1.5">
@@ -170,28 +126,6 @@ export const NewUser: React.FC = () => {
               ]}
               onSelect={(selected) => handleSelectChange("nivel", selected)}
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-muted-foreground italic">Senha</Label>
-            <Input
-              type="password"
-              placeholder="Digite uma senha..."
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="text-zinc-200"
-            />
-          </div>
-          <div className=" flex flex-col gap-1.5">
-            <Label className="text-muted-foreground italic ml-1">
-              Foto de Perfil
-            </Label>
-            <Input
-              type="file"
-              id="user_avatar"
-              accept="image/*"
-              onChange={(e) => setPfpFile(e.target.files?.[0] || null)}
             />
           </div>
 

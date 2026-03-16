@@ -27,8 +27,13 @@ import { Label } from "@/components/ui/label";
 import { db } from "@/firebase/config";
 import { doc, updateDoc } from "firebase/firestore";
 import { getPreferredName } from "@/utils/stringUtils";
+import { useAuth } from "@/contexts/AuthContext";
 
-export const UsersList = memo(() => {
+interface UsersListProps {
+  refreshSignal?: number;
+}
+
+export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
   // Hooks para gerenciar filtros e paginação
 
   // Estados para dados e carregamento
@@ -38,6 +43,8 @@ export const UsersList = memo(() => {
   const [editUser, setEditUser] = useState<User | null>(null);
 
   const { fetchUserAsync } = useUsers();
+  const { userData } = useAuth();
+  const isAdmin = !!userData?.adm;
 
   // Handler para remoção de item
   const handleRemove = useCallback((id: string) => {
@@ -50,9 +57,15 @@ export const UsersList = memo(() => {
 
   const handleSaveEdit = async () => {
     if (!editUser) return;
+    if (!isAdmin) {
+      toast.warning("Apenas administradores podem alterar usuários.");
+      return;
+    }
+
     try {
       const { id, ...data } = editUser;
-      await updateDoc(doc(db, "users", id), data);
+      const { email: _email, ...allowedData } = data;
+      await updateDoc(doc(db, "users", id), allowedData);
       setUsers((prev) => prev.map((u) => (u.id === id ? editUser : u)));
       toast.success("Usuário atualizado com sucesso.");
       setEditUser(null);
@@ -81,7 +94,7 @@ export const UsersList = memo(() => {
   // Carrega dados iniciais ou quando filtros mudam
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData, refreshSignal]);
 
   return (
     <div>
@@ -90,9 +103,7 @@ export const UsersList = memo(() => {
           <TableHeader className="italic">
             <TableRow>
               <TableHead className="sticky left-0 z-10 bg-card">Nome</TableHead>
-              <TableHead>CPF</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
               <TableHead>Nível</TableHead>
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -104,16 +115,15 @@ export const UsersList = memo(() => {
                 <TableCell className="font-medium sticky left-0 z-10 bg-card">
                   {getPreferredName(user.name, (user as any).nome_social)}
                 </TableCell>
-                <TableCell>{user.cpf}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone}</TableCell>
+                <TableCell>{user.email || "-"}</TableCell>
                 <TableCell className="capitalize">{user.nivel}</TableCell>
                 <TableCell>{user.active ? "Sim" : "Não"}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditUser(user)}>
+                    onClick={() => setEditUser(user)}
+                    disabled={!isAdmin}>
                     Editar
                   </Button>
                 </TableCell>
@@ -171,21 +181,19 @@ export const UsersList = memo(() => {
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground italic ml-1">CPF</Label>
                 <Input
-                  value={editUser.cpf}
+                  value={editUser.cpf || ""}
                   onChange={(e) => handleEditChange("cpf", e.target.value)}
                   placeholder="CPF"
-                  required
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground italic ml-1">
-                  Email
+                  E-mail
                 </Label>
                 <Input
-                  value={editUser.email}
-                  onChange={(e) => handleEditChange("email", e.target.value)}
-                  placeholder="Email"
-                  required
+                  value={editUser.email || ""}
+                  placeholder="Sem e-mail cadastrado"
+                  disabled
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -205,7 +213,7 @@ export const UsersList = memo(() => {
                   onChange={(e) =>
                     handleEditChange("nivel", e.target.value as User["nivel"])
                   }
-                  className="border rounded px-2 py-1">
+                  className="border rounded px-2 py-1 bg-muted">
                   <option value="professor">Professor</option>
                   <option value="supervisor">Supervisor</option>
                   <option value="adm">Administrador</option>
