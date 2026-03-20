@@ -1,4 +1,3 @@
-import { SelectSearchConstants } from "@/components/common/SelectSearchConstants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +13,7 @@ import { db } from "@/firebase/config";
 import { addDocWithLog } from "@/firebase/firestoreWithLog";
 import { handleKeyDown } from "@/utils/HandleKeyDown";
 import { Timestamp, collection } from "firebase/firestore";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { User } from "./User";
 import { PlusSquareIcon } from "lucide-react";
@@ -30,25 +29,6 @@ export const NewUser: React.FC<NewUserProps> = ({ onCompleted }) => {
     active: true,
     nivel: "professor",
   });
-
-  const handleSelectChange = useCallback(
-    (field: keyof typeof user, selected: any, isMulti = false) => {
-      if (isMulti) {
-        setUser((prev) => ({
-          ...prev,
-          [field]: Array.isArray(selected)
-            ? selected.map((item) => item.value)
-            : [],
-        }));
-      } else {
-        setUser((prev) => ({
-          ...prev,
-          [field]: selected && !Array.isArray(selected) ? selected.value : "",
-        }));
-      }
-    },
-    [],
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,15 +98,17 @@ export const NewUser: React.FC<NewUserProps> = ({ onCompleted }) => {
             <Label className="text-muted-foreground italic ml-1">
               Nível de Acesso
             </Label>
-            <SelectSearchConstants
-              options={[
-                { label: "Professor", value: "professor" },
-                { label: "Supervisor", value: "supervisor" },
-                { label: "Administrador", value: "adm" },
-              ]}
-              onSelect={(selected) => handleSelectChange("nivel", selected)}
-              required
-            />
+            <select
+              value={user.nivel}
+              onChange={(e) =>
+                setUser({ ...user, nivel: e.target.value as User["nivel"] })
+              }
+              className="border rounded px-2 py-2 bg-background text-sm"
+              required>
+              <option value="professor">Professor</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="adm">Administrador</option>
+            </select>
           </div>
 
           <Button className="mt-4" type="submit">

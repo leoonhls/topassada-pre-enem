@@ -7,6 +7,7 @@ export function useUsers() {
     collectionName: "users",
     fieldsToCapitalize: ["name"],
     defaultFilters: [where("active", "==", true)],
+    pageSize: 500,
   });
 
   const fetchUserAsync = () => {

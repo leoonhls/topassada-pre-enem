@@ -22,6 +22,7 @@ export const NewAluno: React.FC = () => {
   const [form, setForm] = useState({
     nome: "",
     nome_social: "",
+    nome_teams: "",
     cpf: "",
     email: "",
     phone: "",
@@ -43,6 +44,7 @@ export const NewAluno: React.FC = () => {
     setForm({
       nome: "",
       nome_social: "",
+      nome_teams: "",
       cpf: "",
       email: "",
       phone: "",
@@ -92,6 +94,19 @@ export const NewAluno: React.FC = () => {
               value={form.nome_social}
               onChange={handleChange}
               placeholder="Nome social"
+              className="border rounded px-2 py-1"
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-muted-foreground italic ml-1">
+              Nome Teams (opcional)
+            </Label>
+            <Input
+              name="nome_teams"
+              value={form.nome_teams}
+              onChange={handleChange}
+              placeholder="Nome no Microsoft Teams"
               className="border rounded px-2 py-1"
               disabled={loading}
             />

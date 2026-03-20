@@ -1,38 +1,38 @@
-import React, { useEffect, useRef, useState } from "react";
+import { LoadingState } from "@/components/common/LoadingState";
+import { Button } from "@/components/ui/button";
+import { horarios } from "@/features/schedule/horarios";
+import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
+import { useIsMobile } from "@/hooks/useMobile";
+import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "../components/ui/table";
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  limit,
+  query,
+  Timestamp,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import React, { useEffect, useRef, useState } from "react";
 import { Switch } from "../components/ui/switch";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  Timestamp,
-  query,
-  where,
-  limit,
-  updateDoc,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-import { db } from "../firebase/config";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 import { useAuth } from "../contexts/AuthContext";
-import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
-import { horarios } from "@/features/schedule/horarios";
-import { useIsMobile } from "@/hooks/useMobile";
-import { Button } from "@/components/ui/button";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
+import { db } from "../firebase/config";
 
 interface Aluno {
   id: string;
   nome: string;
   nome_social?: string;
+  nome_teams?: string;
   active?: boolean;
 }
 
@@ -94,7 +94,8 @@ const NovaChamada: React.FC = () => {
   >({});
   const [professorOptions, setProfessorOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, userData } = useAuth();
+  const canEdit = userData?.nivel === "supervisor" || userData?.nivel === "adm";
   const hoje = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const dataHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
@@ -116,6 +117,9 @@ const NovaChamada: React.FC = () => {
         const data = docSnap.data() as Omit<Aluno, "id">;
         alunosList.push({ id: docSnap.id, ...data });
       });
+      alunosList.sort((a, b) =>
+        (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }),
+      );
       setAlunos(alunosList);
     };
 
@@ -520,16 +524,18 @@ const NovaChamada: React.FC = () => {
             <span className="text-destructive font-semibold">
               Já existe chamada para o dia selecionado.
             </span>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={editavel}
-                onCheckedChange={setEditavel}
-                id="switch-editavel"
-              />
-              <label htmlFor="switch-editavel" className="text-sm font-medium">
-                Habilitar edição
-              </label>
-            </div>
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={editavel}
+                  onCheckedChange={setEditavel}
+                  id="switch-editavel"
+                />
+                <label htmlFor="switch-editavel" className="text-sm font-medium">
+                  Habilitar edição
+                </label>
+              </div>
+            )}
           </div>
         )}
         {tipoChamada === "professores" && chamadaProfExistente && (
@@ -537,18 +543,20 @@ const NovaChamada: React.FC = () => {
             <span className="text-destructive font-semibold">
               Já existe chamada de professores para o dia selecionado.
             </span>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={editavel}
-                onCheckedChange={setEditavel}
-                id="switch-editavel-professores"
-              />
-              <label
-                htmlFor="switch-editavel-professores"
-                className="text-sm font-medium">
-                Habilitar edição
-              </label>
-            </div>
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={editavel}
+                  onCheckedChange={setEditavel}
+                  id="switch-editavel-professores"
+                />
+                <label
+                  htmlFor="switch-editavel-professores"
+                  className="text-sm font-medium">
+                  Habilitar edição
+                </label>
+              </div>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit}>
@@ -567,11 +575,13 @@ const NovaChamada: React.FC = () => {
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-sm truncate">
-                                {getPreferredName(
-                                  aluno.nome,
-                                  (aluno as any).nome_social,
-                                )}
+                                {getPreferredName(aluno.nome, aluno.nome_social)}
                               </p>
+                              {aluno.nome_teams && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {aluno.nome_teams}
+                                </p>
+                              )}
                             </div>
                             <div className="flex-shrink-0 flex gap-1">
                               <button
@@ -628,9 +638,9 @@ const NovaChamada: React.FC = () => {
                         {alunos.map((aluno) => (
                           <TableRow key={aluno.id}>
                             <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
-                              {getPreferredName(
-                                aluno.nome,
-                                (aluno as any).nome_social,
+                              <span>{getPreferredName(aluno.nome, aluno.nome_social)}</span>
+                              {aluno.nome_teams && (
+                                <p className="text-xs text-muted-foreground">{aluno.nome_teams}</p>
                               )}
                             </TableCell>
                             <TableCell className="border px-2 py-1 text-center">

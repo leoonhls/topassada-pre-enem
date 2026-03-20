@@ -15,6 +15,7 @@ import { capitalizeWords } from "@/utils/stringUtils";
 
 interface UserData {
   adm: boolean;
+  nivel: "professor" | "supervisor" | "adm";
   email: string;
   name: string;
   pfpUrl?: string;
@@ -70,6 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setUserData({
         adm: data.adm ?? data.nivel === "adm",
+        nivel: data.nivel ?? "professor",
         name: capitalizeWords(data.name),
         email: data.email,
         pfpUrl,

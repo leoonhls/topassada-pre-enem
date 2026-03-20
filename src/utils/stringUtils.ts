@@ -33,8 +33,5 @@ export const getPreferredName = (
     return nomeSocial;
   }
   if (!nome) return "";
-
-  const parts = nome.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1]}`;
+  return nome;
 };

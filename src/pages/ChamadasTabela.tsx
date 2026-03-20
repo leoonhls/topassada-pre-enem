@@ -11,7 +11,7 @@ import {
   TableRow,
   TableCell,
 } from "../components/ui/table";
-import { CheckCircle2Icon, X, HelpCircle } from "lucide-react";
+import { CheckCircle2Icon, X, HelpCircle, PencilIcon } from "lucide-react";
 import { MinusIcon } from "lucide-react";
 import { MdReportProblem } from "react-icons/md";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import { Switch } from "@/components/ui/switch";
 import { LoadingState } from "@/components/common/LoadingState";
 import { capitalizeFirstLetter, getPreferredName } from "@/utils/stringUtils";
 import { horarios } from "@/features/schedule/horarios";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Aluno {
   id: string;
@@ -91,6 +93,19 @@ const ChamadasTabela: React.FC = () => {
   const [diasProfessores, setDiasProfessores] = useState<string[]>([]);
   const [professores, setProfessores] = useState<ProfessorRow[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const { userData } = useAuth();
+  const canEdit = userData?.nivel === "supervisor" || userData?.nivel === "adm";
+
+  const [editChamadaAlunos, setEditChamadaAlunos] = useState<{
+    chamada: ChamadaDocument;
+    form: Record<string, ChamadaAluno>;
+  } | null>(null);
+
+  const [editChamadaProf, setEditChamadaProf] = useState<{
+    chamada: ChamadaProfessorDocument;
+    form: Record<string, ChamadaProfessor>;
+  } | null>(null);
 
   const hoje = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -328,9 +343,28 @@ const ChamadasTabela: React.FC = () => {
                 } catch {
                   formatted = dia;
                 }
+                const chamadaDiaObj = chamadas.find((c) => c.dia === dia);
                 return (
                   <TableHead key={dia} className="text-foreground text-center">
-                    {formatted}
+                    <div className="flex flex-col items-center gap-1">
+                      <span>{formatted}</span>
+                      {canEdit && chamadaDiaObj && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5"
+                          title="Editar chamada do dia"
+                          onClick={() => {
+                            const form: Record<string, ChamadaAluno> = {};
+                            chamadaDiaObj.lista.forEach((a) => {
+                              form[a.id] = { ...a };
+                            });
+                            setEditChamadaAlunos({ chamada: chamadaDiaObj, form });
+                          }}>
+                          <PencilIcon className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </TableHead>
                 );
               })}
@@ -505,9 +539,28 @@ const ChamadasTabela: React.FC = () => {
                 } catch {
                   formatted = dia;
                 }
+                const chamadaProfDiaObj = chamadasProfessores.find((c) => c.dia === dia);
                 return (
                   <TableHead key={dia} className="text-foreground text-center">
-                    {formatted}
+                    <div className="flex flex-col items-center gap-1">
+                      <span>{formatted}</span>
+                      {canEdit && chamadaProfDiaObj && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5"
+                          title="Editar chamada do dia"
+                          onClick={() => {
+                            const form: Record<string, ChamadaProfessor> = {};
+                            chamadaProfDiaObj.lista.forEach((p) => {
+                              form[p.id] = { ...p };
+                            });
+                            setEditChamadaProf({ chamada: chamadaProfDiaObj, form });
+                          }}>
+                          <PencilIcon className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </TableHead>
                 );
               })}
@@ -696,6 +749,208 @@ const ChamadasTabela: React.FC = () => {
           font-family: 'Comic Sans MS', 'Baloo 2', 'Quicksand', cursive;
         }
       `}</style>
+
+      {/* Dialog de edição completa - Alunos */}
+      <Dialog
+        open={!!editChamadaAlunos}
+        onOpenChange={(open) => { if (!open) setEditChamadaAlunos(null); }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar chamada de alunos</DialogTitle>
+            <DialogDescription>
+              {editChamadaAlunos && (() => {
+                const [y, m, d] = editChamadaAlunos.chamada.dia.split("-");
+                return `${d}/${m}/${y}`;
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          {editChamadaAlunos && (
+            <div className="flex flex-col gap-2">
+              {editChamadaAlunos.chamada.lista.map((aluno) => {
+                const registro = editChamadaAlunos.form[aluno.id] ?? { ...aluno };
+                const presenca = registro.presenca;
+                return (
+                  <div key={aluno.id} className="rounded-lg border px-3 py-2 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{aluno.nome}</span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                          onClick={() =>
+                            setEditChamadaAlunos((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [aluno.id]: { ...registro, presenca: true } } } : prev
+                            )}>
+                          Presente
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                          onClick={() =>
+                            setEditChamadaAlunos((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [aluno.id]: { ...registro, presenca: false } } } : prev
+                            )}>
+                          Falta
+                        </button>
+                      </div>
+                    </div>
+                    {presenca === false && (
+                      <input
+                        type="text"
+                        className="w-full border rounded px-2 py-1 text-xs"
+                        placeholder="Justificativa (opcional)..."
+                        value={registro.justificativa || ""}
+                        onChange={(e) =>
+                          setEditChamadaAlunos((prev) =>
+                            prev ? { ...prev, form: { ...prev.form, [aluno.id]: { ...registro, justificativa: e.target.value } } } : prev
+                          )
+                        }
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button
+              onClick={async () => {
+                if (!editChamadaAlunos) return;
+                const novaLista = editChamadaAlunos.chamada.lista.map((a) => {
+                  const reg = editChamadaAlunos.form[a.id] ?? a;
+                  const item: ChamadaAluno = { id: a.id, nome: a.nome, presenca: reg.presenca };
+                  if (!item.presenca && reg.justificativa) item.justificativa = reg.justificativa;
+                  return item;
+                });
+                await updateDoc(doc(db, "chamadas", editChamadaAlunos.chamada.id), { lista: novaLista });
+                setChamadas((prev) =>
+                  prev.map((c) =>
+                    c.id === editChamadaAlunos.chamada.id ? { ...c, lista: novaLista } : c,
+                  ),
+                );
+                toast.success("Chamada atualizada!");
+                setEditChamadaAlunos(null);
+              }}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de edição completa - Professores */}
+      <Dialog
+        open={!!editChamadaProf}
+        onOpenChange={(open) => { if (!open) setEditChamadaProf(null); }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar chamada de professores</DialogTitle>
+            <DialogDescription>
+              {editChamadaProf && (() => {
+                const [y, m, d] = editChamadaProf.chamada.dia.split("-");
+                return `${d}/${m}/${y}`;
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          {editChamadaProf && (
+            <div className="flex flex-col gap-2">
+              {editChamadaProf.chamada.lista.map((prof) => {
+                const registro = editChamadaProf.form[prof.id] ?? { ...prof };
+                const presenca = registro.presenca;
+                return (
+                  <div key={prof.id} className="rounded-lg border px-3 py-2 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-col text-sm">
+                        <span className="font-medium">{prof.materia}</span>
+                        <span className="text-xs text-muted-foreground">{prof.professorTitular}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                          onClick={() =>
+                            setEditChamadaProf((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [prof.id]: { ...registro, presenca: true } } } : prev
+                            )}>
+                          Presente
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-2 py-1 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                          onClick={() =>
+                            setEditChamadaProf((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [prof.id]: { ...registro, presenca: false } } } : prev
+                            )}>
+                          Falta
+                        </button>
+                      </div>
+                    </div>
+                    {presenca === false && (
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          className="w-full border rounded px-2 py-1 text-xs"
+                          placeholder="Professor substituto (opcional)..."
+                          value={registro.substituto || ""}
+                          onChange={(e) =>
+                            setEditChamadaProf((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [prof.id]: { ...registro, substituto: e.target.value } } } : prev
+                            )
+                          }
+                        />
+                        <input
+                          type="text"
+                          className="w-full border rounded px-2 py-1 text-xs"
+                          placeholder="Justificativa (opcional)..."
+                          value={registro.justificativa || ""}
+                          onChange={(e) =>
+                            setEditChamadaProf((prev) =>
+                              prev ? { ...prev, form: { ...prev.form, [prof.id]: { ...registro, justificativa: e.target.value } } } : prev
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button
+              onClick={async () => {
+                if (!editChamadaProf) return;
+                const novaLista = editChamadaProf.chamada.lista.map((p) => {
+                  const reg = editChamadaProf.form[p.id] ?? p;
+                  const item: ChamadaProfessor = {
+                    id: p.id,
+                    materia: p.materia,
+                    professorTitular: p.professorTitular,
+                    presenca: reg.presenca,
+                  };
+                  if (!item.presenca && reg.substituto) item.substituto = reg.substituto;
+                  if (!item.presenca && reg.justificativa) item.justificativa = reg.justificativa;
+                  return item;
+                });
+                await updateDoc(doc(db, "chamadasProfessores", editChamadaProf.chamada.id), { lista: novaLista });
+                setChamadasProfessores((prev) =>
+                  prev.map((c) =>
+                    c.id === editChamadaProf.chamada.id ? { ...c, lista: novaLista } : c,
+                  ),
+                );
+                toast.success("Chamada atualizada!");
+                setEditChamadaProf(null);
+              }}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

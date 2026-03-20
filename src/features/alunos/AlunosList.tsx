@@ -45,6 +45,9 @@ export const AlunosList: React.FC = () => {
       snap.forEach((docSnap) => {
         list.push({ id: docSnap.id, ...docSnap.data() });
       });
+      list.sort((a, b) =>
+        (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }),
+      );
       setAlunos(list);
       setLoading(false);
     };
@@ -168,6 +171,18 @@ export const AlunosList: React.FC = () => {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
+                <Label className="text-muted-foreground italic ml-1">
+                  Nome Teams (opcional)
+                </Label>
+                <Input
+                  name="nome_teams"
+                  value={editForm.nome_teams || ""}
+                  onChange={handleEditChange}
+                  placeholder="Nome no Microsoft Teams"
+                  className="border rounded px-2 py-1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
                 <Label className="text-muted-foreground italic ml-1">CPF</Label>
                 <Input
                   name="cpf"
@@ -188,7 +203,6 @@ export const AlunosList: React.FC = () => {
                   onChange={handleEditChange}
                   placeholder="Email"
                   className="border rounded px-2 py-1"
-                  required
                 />
               </div>
               <div className="flex flex-col gap-1.5">

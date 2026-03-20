@@ -144,7 +144,11 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
       const response = await fetchUserAsync();
 
       setCollSize(response.collSize.toString());
-      setUsers(response.items);
+      setUsers(
+        [...response.items].sort((a, b) =>
+          (a.name || "").localeCompare(b.name || "", "pt-BR", { sensitivity: "base" }),
+        ),
+      );
     } catch (error) {
       console.error(error);
       toast.warning("Erro ao carregar useres");
