@@ -12,14 +12,16 @@ const UsersManager: React.FC = () => {
 
   return (
     <div className="p-3">
-      <div className="flex p-5  gap-3 items-center">
-        <h2 className="text-2xl font-bold text-foreground items-center">
+      <div className="flex flex-col sm:flex-row flex-wrap p-3 sm:p-5 gap-3 sm:items-center">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground [text-wrap:balance]">
           Gestão de Usuários
         </h2>
-        <NewUser onCompleted={triggerRefresh} />
-        <InviteUserByEmail onCompleted={triggerRefresh} />
-        <BulkUsersByName onCompleted={triggerRefresh} />
-        <BulkUserInvite onCompleted={triggerRefresh} />
+        <div className="flex flex-wrap gap-2">
+          <NewUser onCompleted={triggerRefresh} />
+          <InviteUserByEmail onCompleted={triggerRefresh} />
+          <BulkUsersByName onCompleted={triggerRefresh} />
+          <BulkUserInvite onCompleted={triggerRefresh} />
+        </div>
       </div>
 
       {/* Lista de Useres */}

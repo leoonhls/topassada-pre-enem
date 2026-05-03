@@ -9,14 +9,6 @@ import { toast } from "sonner";
 import { useUsers } from "./useUsers";
 import { User } from "./User";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -59,8 +51,10 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
   // Estados para dados e carregamento
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [collSize, setCollSize] = useState("");
   const [editUser, setEditUser] = useState<User | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"ativos" | "inativos" | "todos">("ativos");
 
   const [originalEmail, setOriginalEmail] = useState<string | undefined>(undefined);
 
@@ -154,6 +148,7 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
       toast.warning("Erro ao carregar useres");
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   }, []);
 
@@ -162,45 +157,86 @@ export const UsersList = memo(({ refreshSignal = 0 }: UsersListProps) => {
     fetchData();
   }, [fetchData, refreshSignal]);
 
+  const filteredUsers =
+    filterStatus === "ativos"
+      ? users.filter((u) => u.active === true)
+      : filterStatus === "inativos"
+        ? users.filter((u) => u.active === false)
+        : users;
+
+  const countAtivos = users.filter((u) => u.active === true).length;
+  const countInativos = users.filter((u) => u.active === false).length;
+
+  if (initialLoad && loading) {
+    return <LoadingState label="Carregando usuários..." />;
+  }
+
   return (
     <div>
-      <div className="w-full overflow-x-auto mb-2">
-        <Table className="min-w-[640px] text-xs sm:text-sm">
-          <TableHeader className="italic">
-            <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-card">Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Nível</TableHead>
-              <TableHead>Ativo</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium sticky left-0 z-10 bg-card">
-                  {getPreferredName(user.name, (user as any).nome_social)}
-                </TableCell>
-                <TableCell>{user.email || "-"}</TableCell>
-                <TableCell className="capitalize">{user.nivel}</TableCell>
-                <TableCell>{user.active ? "Sim" : "Não"}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => { setEditUser(user); setOriginalEmail(user.email); }}
-                    disabled={!isAdmin}>
-                    Editar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="flex gap-2 mb-3">
+        <Button
+          size="sm"
+          variant={filterStatus === "ativos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("ativos")}>
+          Ativos ({countAtivos})
+        </Button>
+        <Button
+          size="sm"
+          variant={filterStatus === "inativos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("inativos")}>
+          Inativos ({countInativos})
+        </Button>
+        <Button
+          size="sm"
+          variant={filterStatus === "todos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("todos")}>
+          Todos ({users.length})
+        </Button>
       </div>
-
-      {/* Indicador de Carregamento */}
-      {loading && <LoadingState label="Carregando usuários..." />}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
+        {filteredUsers.map((user) => {
+          const nome = getPreferredName(user.name, (user as any).nome_social);
+          const nivelColor: Record<string, string> = {
+            professor: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            supervisor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+            adm: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+          };
+          return (
+            <div
+              key={user.id}
+              className="rounded-xl border bg-card p-3 flex flex-col gap-2.5 shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm leading-tight truncate">{nome}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {user.email || <span className="italic">Sem e-mail</span>}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-lg capitalize ${nivelColor[user.nivel] ?? ""}`}>
+                    {user.nivel}
+                  </span>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${
+                    user.active
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {user.active ? "Ativo" : "Inativo"}
+                  </span>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full mt-0.5 active:scale-[0.96] transition-transform"
+                onClick={() => { setEditUser(user); setOriginalEmail(user.email); }}
+                disabled={!isAdmin}>
+                Editar
+              </Button>
+            </div>
+          );
+        })}
+      </div>
 
       <Dialog
         open={!!editUser}

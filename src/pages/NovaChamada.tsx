@@ -1,4 +1,5 @@
 import { LoadingState } from "@/components/common/LoadingState";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { horarios } from "@/features/schedule/horarios";
 import { useFirebaseDocumentCache } from "@/hooks/useFirebaseDocumentCache";
@@ -13,7 +14,7 @@ import {
   query,
   Timestamp,
   updateDoc,
-  where
+  where,
 } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import { Switch } from "../components/ui/switch";
@@ -27,6 +28,8 @@ import {
 } from "../components/ui/table";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../firebase/config";
+import { Check, X } from "lucide-react";
+import { link } from "fs";
 
 interface Aluno {
   id: string;
@@ -95,7 +98,7 @@ const NovaChamada: React.FC = () => {
   const [professorOptions, setProfessorOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { user: currentUser, userData } = useAuth();
-  const canEdit = userData?.nivel === "supervisor" || userData?.nivel === "adm";
+  const canEdit = !!userData?.nivel;
   const hoje = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const dataHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
@@ -118,7 +121,9 @@ const NovaChamada: React.FC = () => {
         alunosList.push({ id: docSnap.id, ...data });
       });
       alunosList.sort((a, b) =>
-        (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }),
+        (a.nome || "").localeCompare(b.nome || "", "pt-BR", {
+          sensitivity: "base",
+        }),
       );
       setAlunos(alunosList);
     };
@@ -330,7 +335,7 @@ const NovaChamada: React.FC = () => {
         (aluno) => typeof chamada[aluno.id]?.presenca === "boolean",
       );
       if (!todosRespondidos) {
-        alert(
+        toast.error(
           "Preencha presença ou falta para todos os alunos antes de salvar.",
         );
         return;
@@ -368,7 +373,7 @@ const NovaChamada: React.FC = () => {
           quemFez: currentUser?.email || "desconhecido",
           lista: chamadaList,
         });
-        alert("Chamada de alunos atualizada com sucesso!");
+        toast.success("Chamada de alunos atualizada com sucesso!");
       } else {
         await addDoc(collection(db, "chamadas"), {
           timestamp: Timestamp.now(),
@@ -376,7 +381,7 @@ const NovaChamada: React.FC = () => {
           quemFez: currentUser?.email || "desconhecido",
           lista: chamadaList,
         });
-        alert("Chamada de alunos registrada com sucesso!");
+        toast.success("Chamada de alunos registrada com sucesso!");
       }
       setChamada({});
     } else if (tipoChamada === "professores") {
@@ -418,7 +423,7 @@ const NovaChamada: React.FC = () => {
             lista: chamadaListProf,
           },
         );
-        alert("Chamada de professores atualizada com sucesso!");
+        toast.success("Chamada de professores atualizada com sucesso!");
       } else {
         const [year, month, day] = dia.split("-").map((v) => parseInt(v, 10));
         const d = new Date(year, month - 1, day);
@@ -431,7 +436,7 @@ const NovaChamada: React.FC = () => {
           quemFez: currentUser?.email || "desconhecido",
           lista: chamadaListProf,
         });
-        alert("Chamada de professores registrada com sucesso!");
+        toast.success("Chamada de professores registrada com sucesso!");
       }
       setChamadaProf({});
     }
@@ -459,13 +464,11 @@ const NovaChamada: React.FC = () => {
   return (
     <div className="bg-card rounded-xl shadow-lg p-4 md:p-6">
       <div className="flex flex-col max-w-xl justify-between gap-3 md:gap-4 mb-4 md:mb-6">
-        <div className="flex gap-4 items-end">
-          <div className="flex flex-col">
-            <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Painel de presença
-            </span>
-            <span className="text-2xl font-bold leading-tight text-foreground">
-              Fazer chamada
+        <div className="flex gap-4 justify-between w-full items-start md:justify-start">
+          <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground max-md:flex max-md:flex-col">
+            <span>Painel de presença</span>
+            <span className="md:before:content-['_-_'] md:before:whitespace-pre">
+              Nova Chamada
             </span>
           </div>
           <label
@@ -531,7 +534,9 @@ const NovaChamada: React.FC = () => {
                   onCheckedChange={setEditavel}
                   id="switch-editavel"
                 />
-                <label htmlFor="switch-editavel" className="text-sm font-medium">
+                <label
+                  htmlFor="switch-editavel"
+                  className="text-sm font-medium">
                   Habilitar edição
                 </label>
               </div>
@@ -559,49 +564,211 @@ const NovaChamada: React.FC = () => {
             )}
           </div>
         )}
-        <form onSubmit={handleSubmit}>
-          <fieldset disabled={!editavel}>
-            {tipoChamada === "alunos" && (
-              <>
-                {isMobile ? (
-                  <div className="mb-4 space-y-2">
-                    {alunos.map((aluno) => {
-                      const registro = chamada[aluno.id];
-                      const presenca = registro?.presenca;
-                      return (
-                        <div
-                          key={aluno.id}
-                          className="rounded-xl border bg-card px-3 py-2 space-y-2">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm truncate">
-                                {getPreferredName(aluno.nome, aluno.nome_social)}
+      </div>
+      <form onSubmit={handleSubmit}>
+        <fieldset disabled={!editavel}>
+          {tipoChamada === "alunos" && (
+            <>
+              {isMobile ? (
+                <div className="mb-4 space-y-2">
+                  {alunos.map((aluno) => {
+                    const registro = chamada[aluno.id];
+                    const presenca = registro?.presenca;
+                    return (
+                      <div
+                        key={aluno.id}
+                        className="rounded-xl border bg-card px-3 py-2 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {getPreferredName(aluno.nome, aluno.nome_social)}
+                            </p>
+                            {aluno.nome_teams && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {aluno.nome_teams}
                               </p>
-                              {aluno.nome_teams && (
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {aluno.nome_teams}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex-shrink-0 flex gap-1">
-                              <button
-                                type="button"
-                                className={`px-3 py-2 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
-                                onClick={() => handlePresenca(aluno.id, true)}>
-                                Presente
-                              </button>
-                              <button
-                                type="button"
-                                className={`px-3 py-2 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
-                                onClick={() => handlePresenca(aluno.id, false)}>
-                                Falta
-                              </button>
-                            </div>
+                            )}
                           </div>
-                          {presenca === false && (
+                          <div className="flex-shrink-0 flex gap-1">
+                            <Button
+                              className="max-h-7 max-w-7"
+                              type="button"
+                              variant={presenca ? "default" : "link"}
+                              size={"icon"}
+                              onClick={() => handlePresenca(aluno.id, true)}>
+                              <Check />
+                            </Button>
+                            <Button
+                              className="max-h-7 max-w-7"
+                              type="button"
+                              size={"icon"}
+                              variant={
+                                presenca === false ? "destructive" : "link"
+                              }
+                              onClick={() => handlePresenca(aluno.id, false)}>
+                              <X
+                                className={
+                                  presenca === false ? "text-white" : ""
+                                }
+                              />
+                            </Button>
+                          </div>
+                        </div>
+                        {presenca === false && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium">
+                              Justificativa
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded px-2 py-1 text-xs"
+                              placeholder="Digite a justificativa..."
+                              value={registro?.justificativa || ""}
+                              onChange={(e) =>
+                                handleJustificativa(aluno.id, e.target.value)
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto mb-4 rounded-xl border">
+                  <Table className="text-sm min-w-[480px] table-fixed">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10 w-[150px] max-w-[150px]">
+                          Nome
+                        </TableHead>
+                        <TableHead className="border px-2 py-1 w-[100px]">
+                          Presença
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Justificativa (quando falta)
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {alunos.map((aluno) => (
+                        <TableRow key={aluno.id}>
+                          <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10 w-[150px] max-w-[150px]">
+                            <span className="block truncate">
+                              {getPreferredName(aluno.nome, aluno.nome_social)}
+                            </span>
+                            {aluno.nome_teams && (
+                              <p className="text-xs text-muted-foreground">
+                                {aluno.nome_teams}
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="border px-2 py-1 text-center">
+                            <button
+                              type="button"
+                              className={`mr-2 px-2 py-1 rounded min-h-[40px] active:scale-[0.96] transition-transform ${chamada[aluno.id]?.presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, true)}>
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              className={`px-2 py-1 rounded min-h-[40px] active:scale-[0.96] transition-transform ${chamada[aluno.id]?.presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                              onClick={() => handlePresenca(aluno.id, false)}>
+                              X
+                            </button>
+                          </TableCell>
+                          <TableCell className="border px-2 py-1">
+                            <input
+                              type="text"
+                              className="w-full border rounded px-2 py-1 text-xs"
+                              placeholder="Digite a justificativa..."
+                              value={chamada[aluno.id]?.justificativa || ""}
+                              onChange={(e) =>
+                                handleJustificativa(aluno.id, e.target.value)
+                              }
+                              disabled={chamada[aluno.id]?.presenca !== false}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
+          {tipoChamada === "professores" && (
+            <>
+              {isMobile ? (
+                <div className="mb-4 space-y-3">
+                  {professoresDia.length === 0 && (
+                    <div className="rounded-xl border bg-card px-3 py-2 text-center text-sm text-muted-foreground">
+                      Nenhum professor cadastrado para este dia na grade.
+                    </div>
+                  )}
+                  {professoresDia.map((prof, index) => {
+                    const horario = horarios[index];
+                    const registro = chamadaProf[prof.id];
+                    const presenca = registro?.presenca;
+                    return (
+                      <div
+                        key={prof.id}
+                        className="rounded-xl border bg-card px-3 py-2 space-y-2">
+                        <div>
+                          {horario && (
+                            <p className="text-xs text-muted-foreground">
+                              {horario[0]} - {horario[1]}
+                            </p>
+                          )}
+                          <p className="font-semibold text-sm">
+                            {prof.materia}
+                          </p>
+                          <p className="text-xs">{prof.professorTitular}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className={`flex-1 px-3 py-2 rounded text-xs font-semibold min-h-[40px] active:scale-[0.96] transition-transform ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                            onClick={() =>
+                              handlePresencaProfessor(prof.id, true)
+                            }>
+                            Presente
+                          </button>
+                          <button
+                            type="button"
+                            className={`flex-1 px-3 py-2 rounded text-xs font-semibold min-h-[40px] active:scale-[0.96] transition-transform ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                            onClick={() =>
+                              handlePresencaProfessor(prof.id, false)
+                            }>
+                            Falta
+                          </button>
+                        </div>
+                        {presenca === false && (
+                          <>
                             <div className="space-y-1">
                               <label className="text-xs font-medium">
-                                Justificativa
+                                Professor substituto (opcional)
+                              </label>
+                              <select
+                                className="border rounded px-2 py-1 w-full bg-background text-xs"
+                                value={registro?.substituto || ""}
+                                onChange={(e) =>
+                                  handleSubstitutoProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }>
+                                <option value="">Selecione...</option>
+                                {professorOptions.map((nome) => (
+                                  <option key={nome} value={nome}>
+                                    {nome}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">
+                                Justificativa (quando falta)
                               </label>
                               <input
                                 type="text"
@@ -609,288 +776,139 @@ const NovaChamada: React.FC = () => {
                                 placeholder="Digite a justificativa..."
                                 value={registro?.justificativa || ""}
                                 onChange={(e) =>
-                                  handleJustificativa(aluno.id, e.target.value)
+                                  handleJustificativaProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
                                 }
                               />
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="w-full overflow-x-auto mb-4 rounded-xl border">
-                    <Table className="text-sm">
-                      <TableHeader>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto mb-4 rounded-xl border">
+                  <Table className="text-sm min-w-[580px] table-fixed">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10 w-[150px] max-w-[150px]">
+                          Horário / Matéria / Professor
+                        </TableHead>
+                        <TableHead className="border px-2 py-1 w-[90px]">
+                          Presença
+                        </TableHead>
+                        <TableHead className="border px-2 py-1 w-[160px]">
+                          Professor substituto (opcional)
+                        </TableHead>
+                        <TableHead className="border px-2 py-1">
+                          Justificativa (quando falta)
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {professoresDia.length === 0 && (
                         <TableRow>
-                          <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
-                            Nome
-                          </TableHead>
-                          <TableHead className="border px-2 py-1">
-                            Presença
-                          </TableHead>
-                          <TableHead className="border px-2 py-1">
-                            Justificativa (quando falta)
-                          </TableHead>
+                          <TableCell
+                            colSpan={4}
+                            className="border px-2 py-2 text-center text-muted-foreground">
+                            Nenhum professor cadastrado para este dia na grade.
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {alunos.map((aluno) => (
-                          <TableRow key={aluno.id}>
-                            <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
-                              <span>{getPreferredName(aluno.nome, aluno.nome_social)}</span>
-                              {aluno.nome_teams && (
-                                <p className="text-xs text-muted-foreground">{aluno.nome_teams}</p>
-                              )}
+                      )}
+                      {professoresDia.map((prof, index) => {
+                        const horario = horarios[index];
+                        const registro = chamadaProf[prof.id];
+                        const presenca = registro?.presenca;
+                        return (
+                          <TableRow key={prof.id}>
+                            <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10 w-[150px] max-w-[150px]">
+                              <div className="flex flex-col">
+                                {horario && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {horario[0]} - {horario[1]}
+                                  </span>
+                                )}
+                                <span className="font-semibold">
+                                  {prof.materia}
+                                </span>
+                                <span className="text-xs">
+                                  {prof.professorTitular}
+                                </span>
+                              </div>
                             </TableCell>
                             <TableCell className="border px-2 py-1 text-center">
                               <button
                                 type="button"
-                                className={`mr-2 px-2 py-1 rounded ${chamada[aluno.id]?.presenca ? "bg-success text-foreground" : "bg-muted"}`}
-                                onClick={() => handlePresenca(aluno.id, true)}>
+                                className={`mr-2 px-2 py-1 rounded min-h-[40px] active:scale-[0.96] transition-transform ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
+                                onClick={() =>
+                                  handlePresencaProfessor(prof.id, true)
+                                }>
                                 ✓
                               </button>
                               <button
                                 type="button"
-                                className={`px-2 py-1 rounded ${chamada[aluno.id]?.presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
-                                onClick={() => handlePresenca(aluno.id, false)}>
+                                className={`px-2 py-1 rounded min-h-[40px] active:scale-[0.96] transition-transform ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
+                                onClick={() =>
+                                  handlePresencaProfessor(prof.id, false)
+                                }>
                                 X
                               </button>
                             </TableCell>
-                            <TableCell className="border px-2 py-1">
+                            <TableCell className="border px-2 py-1 text-center">
+                              <select
+                                className="border rounded px-2 py-1 w-full bg-background"
+                                value={registro?.substituto || ""}
+                                onChange={(e) =>
+                                  handleSubstitutoProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
+                                }>
+                                <option value="">Selecione...</option>
+                                {professorOptions.map((nome) => (
+                                  <option key={nome} value={nome}>
+                                    {nome}
+                                  </option>
+                                ))}
+                              </select>
+                            </TableCell>
+                            <TableCell className="border px-2 py-1 text-center">
                               <input
                                 type="text"
-                                className="w-full border rounded px-2 py-1 text-xs"
+                                className="w-full border rounded px-2 py-1"
                                 placeholder="Digite a justificativa..."
-                                value={chamada[aluno.id]?.justificativa || ""}
+                                value={registro?.justificativa || ""}
                                 onChange={(e) =>
-                                  handleJustificativa(aluno.id, e.target.value)
+                                  handleJustificativaProfessor(
+                                    prof.id,
+                                    e.target.value,
+                                  )
                                 }
-                                disabled={chamada[aluno.id]?.presenca !== false}
+                                disabled={!!presenca}
                               />
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
-            )}
-            {tipoChamada === "professores" && (
-              <>
-                {isMobile ? (
-                  <div className="mb-4 space-y-3">
-                    {professoresDia.length === 0 && (
-                      <div className="rounded-xl border bg-card px-3 py-2 text-center text-sm text-muted-foreground">
-                        Nenhum professor cadastrado para este dia na grade.
-                      </div>
-                    )}
-                    {professoresDia.map((prof, index) => {
-                      const horario = horarios[index];
-                      const registro = chamadaProf[prof.id];
-                      const presenca = registro?.presenca;
-                      return (
-                        <div
-                          key={prof.id}
-                          className="rounded-xl border bg-card px-3 py-2 space-y-2">
-                          <div>
-                            {horario && (
-                              <p className="text-xs text-muted-foreground">
-                                {horario[0]} - {horario[1]}
-                              </p>
-                            )}
-                            <p className="font-semibold text-sm">
-                              {prof.materia}
-                            </p>
-                            <p className="text-xs">{prof.professorTitular}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className={`flex-1 px-3 py-2 rounded text-xs font-semibold ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
-                              onClick={() =>
-                                handlePresencaProfessor(prof.id, true)
-                              }>
-                              Presente
-                            </button>
-                            <button
-                              type="button"
-                              className={`flex-1 px-3 py-2 rounded text-xs font-semibold ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
-                              onClick={() =>
-                                handlePresencaProfessor(prof.id, false)
-                              }>
-                              Falta
-                            </button>
-                          </div>
-                          {presenca === false && (
-                            <>
-                              <div className="space-y-1">
-                                <label className="text-xs font-medium">
-                                  Professor substituto (opcional)
-                                </label>
-                                <select
-                                  className="border rounded px-2 py-1 w-full bg-background text-xs"
-                                  value={registro?.substituto || ""}
-                                  onChange={(e) =>
-                                    handleSubstitutoProfessor(
-                                      prof.id,
-                                      e.target.value,
-                                    )
-                                  }>
-                                  <option value="">Selecione...</option>
-                                  {professorOptions.map((nome) => (
-                                    <option key={nome} value={nome}>
-                                      {nome}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-xs font-medium">
-                                  Justificativa (quando falta)
-                                </label>
-                                <input
-                                  type="text"
-                                  className="w-full border rounded px-2 py-1 text-xs"
-                                  placeholder="Digite a justificativa..."
-                                  value={registro?.justificativa || ""}
-                                  onChange={(e) =>
-                                    handleJustificativaProfessor(
-                                      prof.id,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="w-full overflow-x-auto mb-4 rounded-xl border">
-                    <Table className=" text-sm">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="border px-2 py-1 sticky left-0 bg-card z-10">
-                            Horário / Matéria / Professor
-                          </TableHead>
-                          <TableHead className="border px-2 py-1">
-                            Presença
-                          </TableHead>
-                          <TableHead className="border px-2 py-1">
-                            Professor substituto (opcional)
-                          </TableHead>
-                          <TableHead className="border px-2 py-1">
-                            Justificativa (quando falta)
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {professoresDia.length === 0 && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={4}
-                              className="border px-2 py-2 text-center text-muted-foreground">
-                              Nenhum professor cadastrado para este dia na
-                              grade.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                        {professoresDia.map((prof, index) => {
-                          const horario = horarios[index];
-                          const registro = chamadaProf[prof.id];
-                          const presenca = registro?.presenca;
-                          return (
-                            <TableRow key={prof.id}>
-                              <TableCell className="border px-2 py-1 sticky left-0 bg-card z-10">
-                                <div className="flex flex-col">
-                                  {horario && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {horario[0]} - {horario[1]}
-                                    </span>
-                                  )}
-                                  <span className="font-semibold">
-                                    {prof.materia}
-                                  </span>
-                                  <span className="text-xs">
-                                    {prof.professorTitular}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="border px-2 py-1 text-center">
-                                <button
-                                  type="button"
-                                  className={`mr-2 px-2 py-1 rounded ${presenca ? "bg-success text-foreground" : "bg-muted"}`}
-                                  onClick={() =>
-                                    handlePresencaProfessor(prof.id, true)
-                                  }>
-                                  ✓
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`px-2 py-1 rounded ${presenca === false ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}
-                                  onClick={() =>
-                                    handlePresencaProfessor(prof.id, false)
-                                  }>
-                                  X
-                                </button>
-                              </TableCell>
-                              <TableCell className="border px-2 py-1 text-center">
-                                <select
-                                  className="border rounded px-2 py-1 w-full bg-background"
-                                  value={registro?.substituto || ""}
-                                  onChange={(e) =>
-                                    handleSubstitutoProfessor(
-                                      prof.id,
-                                      e.target.value,
-                                    )
-                                  }>
-                                  <option value="">Selecione...</option>
-                                  {professorOptions.map((nome) => (
-                                    <option key={nome} value={nome}>
-                                      {nome}
-                                    </option>
-                                  ))}
-                                </select>
-                              </TableCell>
-                              <TableCell className="border px-2 py-1 text-center">
-                                <input
-                                  type="text"
-                                  className="w-full border rounded px-2 py-1"
-                                  placeholder="Digite a justificativa..."
-                                  value={registro?.justificativa || ""}
-                                  onChange={(e) =>
-                                    handleJustificativaProfessor(
-                                      prof.id,
-                                      e.target.value,
-                                    )
-                                  }
-                                  disabled={presenca}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
-            )}
-            {tipoChamada && (
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={!editavel}>
-                Salvar Chamada
-              </button>
-            )}
-          </fieldset>
-        </form>
-      </div>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
+          {tipoChamada && (
+            <button
+              type="submit"
+              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!editavel}>
+              Salvar Chamada
+            </button>
+          )}
+        </fieldset>
+      </form>
     </div>
   );
 };

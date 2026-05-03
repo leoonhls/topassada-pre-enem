@@ -11,7 +11,7 @@ function RootLayout() {
     <ThemeProvider>
       <SidebarProvider>
         {user && <AppSidebar />}
-        <div className="w-full min-h-screen overflow-x-hidden">
+        <div className="w-full min-h-screen overflow-x-hidden [-webkit-font-smoothing:antialiased]">
           <Header />
           <div className="w-full overflow-x-hidden">
             <Outlet />

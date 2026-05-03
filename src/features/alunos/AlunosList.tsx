@@ -2,21 +2,12 @@ import React, { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-  deleteDoc,
   doc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/common/LoadingState";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +16,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -36,6 +26,7 @@ export const AlunosList: React.FC = () => {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editForm, setEditForm] = useState<any | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"ativos" | "inativos" | "todos">("ativos");
 
   useEffect(() => {
     const fetch = async () => {
@@ -80,53 +71,90 @@ export const AlunosList: React.FC = () => {
 
   if (loading) return <LoadingState label="Carregando alunos..." fullscreen />;
 
+  const filteredAlunos =
+    filterStatus === "ativos"
+      ? alunos.filter((a) => a.active === true)
+      : filterStatus === "inativos"
+        ? alunos.filter((a) => a.active === false)
+        : alunos;
+
+  const countAtivos = alunos.filter((a) => a.active === true).length;
+  const countInativos = alunos.filter((a) => a.active === false).length;
+
   return (
     <>
-      <div className="w-full overflow-x-auto">
-        <Table className="min-w-[640px] text-xs sm:text-sm">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-card">Nome</TableHead>
-              <TableHead>CPF</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Ativo</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {alunos.map((aluno) => (
-              <TableRow key={aluno.id}>
-                <TableCell className="sticky items-start left-0 z-10 bg-card">
-                  {getPreferredName(aluno.nome, aluno.nome_social)}
-                </TableCell>
-                <TableCell>{aluno.cpf}</TableCell>
-                <TableCell>{aluno.email}</TableCell>
-                <TableCell>{aluno.phone}</TableCell>
-                <TableCell>{aluno.active ? "Sim" : "Não"}</TableCell>
-                {/* <TableCell>
-                {aluno.pfpPath ? (
-                  <img
-                    src={aluno.pfpPath}
-                    alt="Foto"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  "-"
+      <div className="flex gap-2 mb-3">
+        <Button
+          size="sm"
+          variant={filterStatus === "ativos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("ativos")}>
+          Ativos ({countAtivos})
+        </Button>
+        <Button
+          size="sm"
+          variant={filterStatus === "inativos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("inativos")}>
+          Inativos ({countInativos})
+        </Button>
+        <Button
+          size="sm"
+          variant={filterStatus === "todos" ? "default" : "outline"}
+          onClick={() => setFilterStatus("todos")}>
+          Todos ({alunos.length})
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {filteredAlunos.map((aluno) => {
+          const nome = getPreferredName(aluno.nome, aluno.nome_social);
+          return (
+            <div
+              key={aluno.id}
+              className="rounded-xl border bg-card p-3 flex flex-col gap-2.5 shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm leading-tight truncate">{nome}</p>
+                  {aluno.nome_social && aluno.nome !== aluno.nome_social && (
+                    <p className="text-xs text-muted-foreground truncate">{aluno.nome}</p>
+                  )}
+                </div>
+                <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-lg ${
+                  aluno.active
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {aluno.active ? "Ativo" : "Inativo"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                {aluno.cpf && (
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide font-medium">CPF</span>
+                    <span className="truncate">{aluno.cpf}</span>
+                  </div>
                 )}
-              </TableCell> */}
-                <TableCell className="space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditForm(aluno)}>
-                    Editar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                {aluno.phone && (
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide font-medium">Telefone</span>
+                    <span className="truncate">{aluno.phone}</span>
+                  </div>
+                )}
+                {aluno.email && (
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[10px] uppercase tracking-wide font-medium">Email</span>
+                    <span className="truncate">{aluno.email}</span>
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-0.5 active:scale-[0.96] transition-transform"
+                onClick={() => setEditForm(aluno)}>
+                Editar
+              </Button>
+            </div>
+          );
+        })}
       </div>
       <Dialog
         open={!!editForm}
