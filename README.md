@@ -1,54 +1,27 @@
-# React + TypeScript + Vite
+# TÔ PASSADA! Pré-ENEM
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App web (PWA) de gestão do cursinho comunitário **TÔ PASSADA! Pré-ENEM**: grade de aulas, equipe de professores, cadastro de alunos e chamada.
 
-Currently, two official plugins are available:
+## Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Grade de aulas**: montagem dos horários por matéria e professor
+- **Equipe**: cadastro de professores e matérias
+- **Alunos**: cadastro e listagem
+- **Chamada**: registro de presença por aula e histórico
+- Login com Firebase Auth, log de ações e instalação como PWA
 
-## Expanding the ESLint configuration
+## Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+React 19 · TypeScript · Vite · Tailwind CSS · Radix UI · Firebase (Auth, Firestore, Storage, Hosting) · vite-plugin-pwa
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Rodando localmente
+
+```bash
+npm install
+cp .env.example .env   # preencha com as credenciais do seu projeto Firebase
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Deploy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+Push na `main` publica no Firebase Hosting via GitHub Actions (`.github/workflows/deploy.yml`), com as variáveis vindas dos secrets do repositório.
